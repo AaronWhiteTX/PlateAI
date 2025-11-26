@@ -771,6 +771,34 @@
             );
         }
 
+        // Check if user is logged in on page load
+        function checkLoginStatus() {
+            const email = localStorage.getItem('email');
+            if (email) {
+                updateNavForLoggedIn(email);
+                // Hide hero, features, how it works sections
+                document.querySelector('.hero').style.display = 'none';
+                document.querySelector('.features').style.display = 'none';
+                document.querySelector('.app-section').style.display = 'none';
+                // Show dashboard
+                showDashboard();
+            }
+        }
+
+        function updateNavForLoggedIn(email) {
+            const navRight = document.querySelector('.nav-right');
+            navRight.innerHTML = `
+                <span style="color: var(--text-muted); font-size: 0.9rem; margin-right: 1rem;">${email}</span>
+                <button class="btn btn-secondary" onclick="logout()">Sign Out</button>
+            `;
+        }
+
+        function logout() {
+            localStorage.removeItem('user_id');
+            localStorage.removeItem('email');
+            location.reload();
+        }
+
         // Handle Google Sign In response
         function handleGoogleSignIn(response) {
             const token = response.credential;
@@ -790,10 +818,14 @@
                     // Store user info
                     localStorage.setItem('user_id', data.user_id);
                     localStorage.setItem('email', data.email);
-                    alert('Signed in as ' + data.email);
                     closeModal('signInModal');
                     closeModal('signUpModal');
-                    // Redirect or update UI
+                    // Update nav and show dashboard
+                    updateNavForLoggedIn(data.email);
+                    document.querySelector('.hero').style.display = 'none';
+                    document.querySelector('.features').style.display = 'none';
+                    document.querySelector('.app-section').style.display = 'none';
+                    showDashboard();
                 } else {
                     alert('Sign in failed: ' + data.message);
                 }
@@ -860,9 +892,12 @@
                 if (data.success) {
                     localStorage.setItem('user_id', data.user_id);
                     localStorage.setItem('email', email);
-                    alert('Account created! Welcome to PlateAI');
                     closeModal('signUpModal');
-                    // Redirect or update UI
+                    updateNavForLoggedIn(email);
+                    document.querySelector('.hero').style.display = 'none';
+                    document.querySelector('.features').style.display = 'none';
+                    document.querySelector('.app-section').style.display = 'none';
+                    showDashboard();
                 } else {
                     document.getElementById('signUpError').textContent = data.message || 'Sign up failed';
                     document.getElementById('signUpError').classList.add('show');
@@ -895,9 +930,12 @@
                 if (data.success) {
                     localStorage.setItem('user_id', data.user_id);
                     localStorage.setItem('email', email);
-                    alert('Signed in as ' + email);
                     closeModal('signInModal');
-                    // Redirect or update UI
+                    updateNavForLoggedIn(email);
+                    document.querySelector('.hero').style.display = 'none';
+                    document.querySelector('.features').style.display = 'none';
+                    document.querySelector('.app-section').style.display = 'none';
+                    showDashboard();
                 } else {
                     document.getElementById('signInError').textContent = data.message || 'Sign in failed';
                     document.getElementById('signInError').classList.add('show');
@@ -910,8 +948,16 @@
             });
         }
 
+        // Redirect to dashboard
+        function showDashboard() {
+            window.location.href = '/dashboard.html';
+        }
+
         // Initialize when page loads
-        window.addEventListener('load', initializeGoogleSignIn);
+        window.addEventListener('load', function() {
+            initializeGoogleSignIn();
+            checkLoginStatus();
+        });
     </script>
 </body>
 </html>
