@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlateAI - Intelligent Food Intelligence</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0891b2;
+            --primary-dark: #0e7490;
+            --primary-light: #06b6d4;
+            --bg: #ffffff;
+            --bg-subtle: #f8fafc;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            padding: 1rem 2rem;
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--primary);
+            letter-spacing: -0.5px;
+            flex-grow: 1;
+        }
+
+        .nav-right {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        @media (max-width: 768px) {
+            nav {
+                padding: 0.75rem 1rem;
+            }
+
+            .logo {
+                font-size: 1.1rem;
+            }
+
+            .nav-right {
+                gap: 0.5rem;
+            }
+
+            .btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.85rem;
+            }
+        }
+
+        .btn {
+            padding: 0.65rem 1.5rem;
+            border-radius: 6px;
+            border: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        /* Hero Section */
+        .hero {
+            margin-top: 80px;
+            padding: 6rem 2rem;
+            text-align: center;
+            background: linear-gradient(135deg, rgba(8, 145, 178, 0.03) 0%, rgba(6, 182, 212, 0.03) 100%);
+        }
+
+        .hero-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 1.5rem;
+            line-height: 1.1;
+            letter-spacing: -1px;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            margin-bottom: 2.5rem;
+            line-height: 1.6;
+        }
+
+        .cta-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* Features Section */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .features {
+            padding: 6rem 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .features {
+                padding: 4rem 1rem;
+            }
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        @media (max-width: 768px) {
+            .section-header {
+                margin-bottom: 2rem;
+            }
+
+            .section-header h2 {
+                font-size: 1.8rem;
+            }
+
+            .section-header p {
+                font-size: 0.95rem;
+            }
+        }
+
+        .section-header h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 1rem;
+        }
+
+        .section-header p {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            width: 100%;
+        }
+
+        .feature-card {
+            background: var(--bg-subtle);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2.5rem 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            border-color: var(--primary);
+            background: var(--bg);
+            box-shadow: 0 8px 24px rgba(8, 145, 178, 0.1);
+            transform: translateY(-4px);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.35rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.75rem;
+        }
+
+        .feature-card p {
+            color: var(--text-muted);
+            line-height: 1.7;
+            font-size: 0.95rem;
+        }
+
+        .diet-tags {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .diet-tag {
+            background: rgba(8, 145, 178, 0.1);
+            color: var(--primary);
+            padding: 0.35rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .features-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.75rem;
+                max-width: 100%;
+                overflow: hidden;
+            }
+
+            .feature-card {
+                padding: 1.25rem 0.75rem;
+            }
+
+            .feature-card h3 {
+                font-size: 1rem;
+            }
+
+            .feature-card p {
+                font-size: 0.8rem;
+            }
+
+            .feature-icon {
+                font-size: 2.2rem;
+                margin-bottom: 0.75rem;
+            }
+
+            .features-grid .feature-card:nth-child(n+7) {
+                display: none;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .modal-content {
+                padding: 2rem;
+            }
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg);
+            border-radius: 12px;
+            padding: 3rem;
+            max-width: 450px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .modal-header h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.85rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.1);
+        }
+
+        .form-group button {
+            width: 100%;
+        }
+
+        .auth-toggle {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .auth-toggle a {
+            color: var(--primary);
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .auth-toggle a:hover {
+            text-decoration: underline;
+        }
+
+        /* App Section */
+        .app-section {
+            padding: 4rem 2rem;
+            background: var(--bg-subtle);
+        }
+
+        .app-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 3rem;
+            align-items: center;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 768px) {
+            .app-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .app-content h2 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .app-content p {
+            font-size: 1.05rem;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+            line-height: 1.7;
+        }
+
+        .step-list {
+            list-style: none;
+        }
+
+        .step-list li {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            align-items: flex-start;
+        }
+
+        .step-number {
+            background: var(--primary);
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .step-text h4 {
+            color: var(--text);
+            margin-bottom: 0.25rem;
+            font-weight: 600;
+        }
+
+        .step-text p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin: 0;
+        }
+
+        .app-preview {
+            background: linear-gradient(135deg, rgba(8, 145, 178, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--text);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            font-size: 0.9rem;
+            margin-top: 4rem;
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <div class="logo">PlateAI</div>
+            <div class="nav-right">
+                <button class="btn btn-secondary" onclick="openSignIn()">Sign In</button>
+                <button class="btn btn-primary" onclick="openSignUp()">Get Started</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1>Intelligent Food Intelligence</h1>
+                <p>Snap a photo. Understand your nutrition. Take control of your diet with AI-powered food analysis.</p>
+                <div class="cta-group">
+                    <button class="btn btn-primary" onclick="openSignUp()" style="font-size: 1rem; padding: 0.8rem 2rem;">Start for Free</button>
+                    <button class="btn btn-secondary" style="font-size: 1rem; padding: 0.8rem 2rem;">Learn More</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+        <div class="container">
+            <div class="section-header">
+                <h2>What PlateAI Does</h2>
+                <p>Everything you need to understand and optimize your favorite nutritious meals</p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">💬</div>
+                    <h3>AI Food Coach</h3>
+                    <p>Ask our AI nutritionist anything about ingredients, recipes, or dietary advice.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🍳</div>
+                    <h3>Recipe Discovery</h3>
+                    <p>Thousands of recipes tailored to your goals. Snap a photo and get recipe ideas instantly.</p>
+                    <div class="diet-tags">
+                        <span class="diet-tag">Keto Friendly</span>
+                        <span class="diet-tag">Vegan Friendly</span>
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📸</div>
+                    <h3>Visual Recognition</h3>
+                    <p>Snap a photo and instantly get detailed nutritional insights.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <h3>Nutrition Tracking</h3>
+                    <p>Auto-calculate calories, protein, carbs, fat, and fiber for every meal.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📋</div>
+                    <h3>Meal Planning</h3>
+                    <p>Convert any recipe to keto-friendly, vegan, or your dietary preferences.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Progress Insights</h3>
+                    <p>Track nutrition trends and progress toward your health goals.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Instant Results</h3>
+                    <p>Real-time analysis in seconds. No waiting, no guessing.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <h3>Goal Tracking</h3>
+                    <p>Set targets and track progress toward your objectives.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="app-section">
+        <div class="container">
+            <div class="app-grid">
+                <div class="app-content">
+                    <h2>How It Works</h2>
+                    <p>Getting started with PlateAI is simple. Follow these three easy steps to revolutionize how you think about food.</p>
+
+                    <ul class="step-list">
+                        <li>
+                            <div class="step-number">1</div>
+                            <div class="step-text">
+                                <h4>Upload Your Meal</h4>
+                                <p>Take a photo of any dish or upload from your phone. Our AI instantly recognizes the food.</p>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="step-number">2</div>
+                            <div class="step-text">
+                                <h4>Get Instant Analysis</h4>
+                                <p>Receive detailed nutritional breakdown including calories, macros, ingredients, and portion size.</p>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="step-number">3</div>
+                            <div class="step-text">
+                                <h4>Track & Optimize</h4>
+                                <p>Build your nutrition profile over time. Use insights to make smarter food choices and reach your goals.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Auth Modals -->
+    <div class="modal" id="signUpModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create Account</h2>
+                <button class="close-btn" onclick="closeModal('signUpModal')">✕</button>
+            </div>
+
+            <div class="error" id="signUpError"></div>
+
+            <form onsubmit="handleSignUp(event)">
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="signUpEmail" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="signUpPassword" required>
+                </div>
+
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">Create Account</button>
+                </div>
+            </form>
+
+            <div class="auth-toggle">
+                Already have an account? <a onclick="toggleModal('signUpModal', 'signInModal')">Sign In</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="signInModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Sign In</h2>
+                <button class="close-btn" onclick="closeModal('signInModal')">✕</button>
+            </div>
+
+            <div class="error" id="signInError"></div>
+
+            <form onsubmit="handleSignIn(event)">
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="signInEmail" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="signInPassword" required>
+                </div>
+
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">Sign In</button>
+                </div>
+            </form>
+
+            <div class="auth-toggle">
+                Don't have an account? <a onclick="toggleModal('signInModal', 'signUpModal')">Create one</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2025 PlateAI. Intelligent food intelligence for a healthier you.</p>
+    </footer>
+
+    <script>
+        function openSignUp() {
+            document.getElementById('signUpModal').classList.add('show');
+        }
+
+        function openSignIn() {
+            document.getElementById('signInModal').classList.add('show');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+        }
+
+        function toggleModal(closeId, openId) {
+            closeModal(closeId);
+            openModal(openId);
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('show');
+        }
+
+        // Close modals on outside click
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('show');
+                }
+            });
+        });
+
+        function handleSignUp(e) {
+            e.preventDefault();
+            const email = document.getElementById('signUpEmail').value;
+            const password = document.getElementById('signUpPassword').value;
+            
+            // TODO: Connect to AWS Cognito
+            alert('Sign up coming soon! Email: ' + email);
+            closeModal('signUpModal');
+        }
+
+        function handleSignIn(e) {
+            e.preventDefault();
+            const email = document.getElementById('signInEmail').value;
+            const password = document.getElementById('signInPassword').value;
+            
+            // TODO: Connect to AWS Cognito
+            alert('Sign in coming soon! Email: ' + email);
+            closeModal('signInModal');
+        }
+    </script>
+</body>
+</html>
