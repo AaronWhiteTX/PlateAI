@@ -1,0 +1,2047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlateAI Dashboard - Analyze Your Meals</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0891b2;
+            --primary-dark: #0e7490;
+            --primary-light: #06b6d4;
+            --bg: #ffffff;
+            --bg-subtle: #f8fafc;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: var(--bg-subtle);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            padding: 1rem 2rem;
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .nav-right {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        @media (max-width: 768px) {
+            .nav-container {
+                flex-wrap: wrap;
+            }
+
+            .logo {
+                flex: 0 0 auto;
+                font-size: 1.1rem;
+            }
+
+            .nav-right {
+                flex: 1;
+                gap: 0.5rem;
+                flex-direction: column;
+                align-items: flex-end;
+            }
+
+            #userEmail {
+                font-size: 0.75rem !important;
+                margin-right: 0 !important;
+                width: 100%;
+                text-align: right;
+                margin-bottom: 0.25rem;
+            }
+
+            .btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.85rem;
+                white-space: nowrap;
+            }
+        }
+
+        .btn {
+            padding: 0.65rem 1.5rem;
+            border-radius: 6px;
+            border: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            margin-top: 80px;
+        }
+
+        /* Upload Section */
+        .upload-section {
+            background: var(--bg);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 2px dashed var(--border);
+            text-align: center;
+        }
+
+        .upload-section h2 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            color: var(--text);
+        }
+
+        .upload-section p {
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+
+        .upload-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        #photoInput {
+            display: none;
+        }
+
+        .image-preview {
+            margin-top: 2rem;
+            max-width: 300px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .image-preview img {
+            width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Analysis Results */
+        .analysis-section {
+            display: none;
+            background: var(--bg);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .analysis-section.show {
+            display: block;
+        }
+
+        .analysis-header {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .analysis-image {
+            flex: 0 0 200px;
+        }
+
+        .analysis-image img {
+            width: 100%;
+            border-radius: 8px;
+        }
+
+        .analysis-main {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .dish-name {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 1rem;
+        }
+
+        .confidence {
+            display: inline-block;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .nutrition-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .nutrition-card {
+            background: var(--bg-subtle);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .nutrition-label {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .nutrition-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .ingredients {
+            margin-top: 1.5rem;
+        }
+
+        .ingredients h4 {
+            color: var(--text);
+            margin-bottom: 0.75rem;
+        }
+
+        .ingredient-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .ingredient-tag {
+            background: rgba(8, 145, 178, 0.1);
+            color: var(--primary);
+            padding: 0.35rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+
+        /* Meals History */
+        .meals-section {
+            background: var(--bg);
+            border-radius: 12px;
+            padding: 2rem;
+        }
+
+        .meals-section h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--text);
+        }
+
+        .meals-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .meal-card {
+            background: var(--bg-subtle);
+            border-radius: 8px;
+            padding: 1rem;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .meal-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(8, 145, 178, 0.1);
+        }
+
+        .meal-card h4 {
+            color: var(--text);
+            margin-bottom: 0.75rem;
+        }
+
+        .meal-time {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+        }
+
+        .meal-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .meal-stat {
+            color: var(--text-muted);
+        }
+
+        .meal-stat strong {
+            color: var(--primary);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        /* Daily Meal Planner */
+        .planner-section {
+            background: var(--bg);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-top: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .planner-section h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--text);
+        }
+
+        .meals-by-type {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .meal-type-card {
+            background: var(--bg-subtle);
+            border-radius: 8px;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .meal-type-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .meal-type-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .meal-type-emoji {
+            font-size: 1.5rem;
+        }
+
+        .meal-type-total {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .meal-item {
+            background: var(--bg);
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin-bottom: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid var(--border);
+        }
+
+        .meal-item-info {
+            flex: 1;
+        }
+
+        .meal-item-name {
+            font-weight: 600;
+            color: var(--text);
+            font-size: 0.95rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .meal-item-cals {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .meal-item-remove {
+            background: none;
+            border: none;
+            color: #dc2626;
+            cursor: pointer;
+            font-size: 1.2rem;
+            margin-left: 0.75rem;
+            padding: 0;
+        }
+
+        .add-meal-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(8, 145, 178, 0.1);
+            border: 1px dashed var(--primary);
+            border-radius: 6px;
+            color: var(--primary);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .add-meal-btn:hover {
+            background: rgba(8, 145, 178, 0.2);
+        }
+
+        .daily-summary {
+            background: linear-gradient(135deg, rgba(8, 145, 178, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .summary-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 1rem;
+        }
+
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+        }
+
+        .summary-stat {
+            text-align: center;
+        }
+
+        .summary-stat-label {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            transition: width 0.3s ease;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-muted);
+        }
+
+        .recipe-section {
+            background: var(--bg-subtle);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-top: 1.5rem;
+        }
+
+        .recipe-section h4 {
+            color: var(--text);
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .recipe-content {
+            background: var(--bg);
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            line-height: 1.8;
+        }
+
+        .recipe-content p {
+            margin-bottom: 0.75rem;
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+
+        .recipe-content strong {
+            color: var(--primary);
+        }
+
+        .recipe-nutrition {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .recipe-nutrition-card {
+            background: var(--bg-subtle);
+            padding: 0.75rem;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .recipe-nutrition-label {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        .recipe-nutrition-value {
+            color: var(--primary);
+            font-weight: 700;
+            margin-top: 0.25rem;
+        }
+
+        /* AI Chat Section */
+        .chat-section {
+            background: var(--bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .chat-section h3 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            color: var(--text);
+        }
+
+        .chat-messages {
+            background: var(--bg-subtle);
+            border-radius: 8px;
+            padding: 1rem;
+            height: 250px;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .message {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-bubble {
+            max-width: 80%;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .message.ai .message-bubble {
+            background: var(--bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .message.user .message-bubble {
+            background: var(--primary);
+            color: white;
+        }
+
+        .chat-input-group {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .chat-input-group input {
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+
+        .chat-input-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.1);
+        }
+
+        .chat-input-group button {
+            padding: 0.75rem 1.5rem;
+        }
+
+        /* Daily Meal Planner */
+        .planner-section {
+            background: var(--bg);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-top: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .planner-section h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--text);
+        }
+
+        .daily-summary {
+            background: linear-gradient(135deg, rgba(8, 145, 178, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .summary-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 1rem;
+        }
+
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+        }
+
+        .summary-stat {
+            text-align: center;
+        }
+
+        .summary-stat-label {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            transition: width 0.3s ease;
+        }
+
+        .meals-by-type {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .meal-type-card {
+            background: var(--bg-subtle);
+            border-radius: 8px;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .meal-type-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .meal-type-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .meal-type-emoji {
+            font-size: 1.5rem;
+        }
+
+        .meal-type-total {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .meal-item {
+            background: var(--bg);
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin-bottom: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid var(--border);
+        }
+
+        .meal-item-info {
+            flex: 1;
+        }
+
+        .meal-item-name {
+            font-weight: 600;
+            color: var(--text);
+            font-size: 0.95rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .meal-item-cals {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .meal-item-remove {
+            background: none;
+            border: none;
+            color: #dc2626;
+            cursor: pointer;
+            font-size: 1.2rem;
+            margin-left: 0.75rem;
+            padding: 0;
+        }
+
+        .add-meal-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(8, 145, 178, 0.1);
+            border: 1px dashed var(--primary);
+            border-radius: 6px;
+            color: var(--primary);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .add-meal-btn:hover {
+            background: rgba(8, 145, 178, 0.2);
+        }
+
+        /* Manual Meal Modal */
+        .manual-meal-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 3000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .manual-meal-modal.show {
+            display: flex;
+        }
+
+        .manual-meal-content {
+            background: var(--bg);
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .manual-meal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .manual-meal-header h3 {
+            font-size: 1.5rem;
+            color: var(--text);
+        }
+
+        .manual-meal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        .manual-meal-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group.full {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input {
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.1);
+        }
+
+        .manual-meal-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .manual-meal-buttons button {
+            flex: 1;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .manual-meal-buttons .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .manual-meal-buttons .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .manual-meal-buttons .btn-secondary {
+            background: var(--border);
+            color: var(--text);
+        }
+
+        .manual-meal-buttons .btn-secondary:hover {
+            background: var(--text-muted);
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+                margin-top: 70px;
+            }
+
+            .upload-section {
+                padding: 1.5rem;
+            }
+
+            .analysis-header {
+                flex-direction: column;
+            }
+
+            .dish-name {
+                font-size: 1.5rem;
+            }
+
+            .nutrition-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .action-buttons .btn {
+                width: 100%;
+            }
+
+            .meals-by-type {
+                grid-template-columns: 1fr;
+            }
+
+            .summary-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <div class="logo">PlateAI</div>
+            <div class="nav-right">
+                <span id="userEmail" style="color: var(--text-muted); font-size: 0.9rem; margin-right: 1rem;"></span>
+                <button class="btn btn-secondary" onclick="logout()">Sign Out</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Upload Section -->
+        <div class="upload-section">
+            <h2>📸 Analyze Your Meal</h2>
+            <p>Take a photo of your meal and get instant nutritional analysis</p>
+            
+            <div class="upload-buttons">
+                <button class="btn btn-primary" onclick="document.getElementById('photoInput').click()">
+                    📷 Take Photo
+                </button>
+                <button class="btn btn-secondary" onclick="openCamera()">
+                    🎥 Use Camera
+                </button>
+            </div>
+
+            <input type="file" id="photoInput" accept="image/*" onchange="handlePhotoUpload(event)">
+
+            <div id="imagePreview" class="image-preview" style="display: none;">
+                <img id="previewImage" src="" alt="Preview">
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 1rem; color: var(--text-muted);">Analyzing your meal...</p>
+        </div>
+
+        <!-- Error Message -->
+        <div id="errorMessage" class="error"></div>
+
+        <!-- Analysis Results -->
+        <div id="analysisSection" class="analysis-section">
+            <div class="analysis-header">
+                <div class="analysis-image">
+                    <img id="analysisImage" src="" alt="Meal">
+                </div>
+                <div class="analysis-main">
+                    <div class="dish-name" id="dishName"></div>
+                    <div class="confidence" id="confidence"></div>
+
+                    <div class="nutrition-grid">
+                        <div class="nutrition-card">
+                            <div class="nutrition-label">Calories</div>
+                            <div class="nutrition-value" id="caloriesValue">0</div>
+                        </div>
+                        <div class="nutrition-card">
+                            <div class="nutrition-label">Protein</div>
+                            <div class="nutrition-value" id="proteinValue">0g</div>
+                        </div>
+                        <div class="nutrition-card">
+                            <div class="nutrition-label">Carbs</div>
+                            <div class="nutrition-value" id="carbsValue">0g</div>
+                        </div>
+                        <div class="nutrition-card">
+                            <div class="nutrition-label">Fat</div>
+                            <div class="nutrition-value" id="fatValue">0g</div>
+                        </div>
+                    </div>
+
+                    <div class="ingredients">
+                        <h4>Main Ingredients</h4>
+                        <div class="ingredient-list" id="ingredientsList"></div>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="saveMeal()">💾 Save Meal</button>
+                        <button class="btn btn-secondary" onclick="makeVegan()">🥗 Make Vegan</button>
+                        <button class="btn btn-secondary" onclick="makeKeto()">🥩 Make Keto</button>
+                        <button class="btn btn-secondary" onclick="makeHealthy()">✨ Make Healthy</button>
+                        <button class="btn btn-secondary" onclick="analyzeAnother()">📸 Analyze Another</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recipe Display Section -->
+            <div id="recipeSection" class="recipe-section" style="display: none;">
+                <h4 id="recipeTitle"></h4>
+                <div class="recipe-content" id="recipeContent"></div>
+                <div class="recipe-nutrition" id="recipeNutrition"></div>
+                <div class="action-buttons" style="margin-top: 1rem;">
+                    <button class="btn btn-primary" onclick="saveRecipe()">💾 Save Recipe</button>
+                    <button class="btn btn-secondary" onclick="closeRecipe()">✕ Close</button>
+                </div>
+            </div>
+
+            <!-- AI Chat Section -->
+            <div class="chat-section" id="chatSection" style="display: none;">
+                <h3>🤖 Ask AI About This Meal</h3>
+                <div class="chat-messages" id="chatMessages"></div>
+                <div class="chat-input-group">
+                    <input type="text" id="chatInput" placeholder="Ask a question about the meal..." onkeypress="handleChatKeypress(event)">
+                    <button class="btn btn-primary" onclick="sendChatMessage()">Send</button>
+                </div>
+            </div>
+
+        <!-- Meals History -->
+        </div>
+
+        <!-- Daily Meal Planner -->
+        <div class="planner-section">
+            <h3>📅 Daily Meal Planner</h3>
+            
+            <div class="daily-summary">
+                <div class="summary-title">
+                    <span>Today's Nutrition</span>
+                    <button class="edit-goal-btn" onclick="toggleGoalEdit()">Set Goals</button>
+                </div>
+                <div id="goalEditUI" style="display: none;" class="goal-input">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; width: 100%;">
+                        <div>
+                            <label style="font-size: 0.8rem; color: var(--text-muted);">Calorie Goal</label>
+                            <input type="number" id="calorieGoalInput" value="2000" min="500" max="5000">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; color: var(--text-muted);">Protein Goal (g)</label>
+                            <input type="number" id="proteinGoalInput" value="50" min="10" max="300">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; color: var(--text-muted);">Carb Goal (g)</label>
+                            <input type="number" id="carbGoalInput" value="250" min="20" max="500">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; color: var(--text-muted);">Fiber Goal (g)</label>
+                            <input type="number" id="fiberGoalInput" value="25" min="5" max="100">
+                        </div>
+                    </div>
+                    <button onclick="saveGoals()" style="width: 100%; margin-top: 0.5rem;">Save</button>
+                </div>
+                <div class="summary-stats">
+                    <div class="summary-stat">
+                        <div class="summary-stat-label">Calories</div>
+                        <div class="summary-stat-value" id="totalCalories">0</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);" id="calorieGoalDisplay">Goal: 2000</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="caloriesProgress" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="summary-stat">
+                        <div class="summary-stat-label">Protein</div>
+                        <div class="summary-stat-value" id="totalProtein">0g</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);" id="proteinGoalDisplay">Goal: 50g</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="proteinProgress" style="width: 0%; background: #f59e0b;"></div>
+                        </div>
+                    </div>
+                    <div class="summary-stat">
+                        <div class="summary-stat-label">Carbs</div>
+                        <div class="summary-stat-value" id="totalCarbs">0g</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);" id="carbGoalDisplay">Goal: 250g</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="carbsProgress" style="width: 0%; background: #8b5cf6;"></div>
+                        </div>
+                    </div>
+                    <div class="summary-stat">
+                        <div class="summary-stat-label">Fat</div>
+                        <div class="summary-stat-value" id="totalFat">0g</div>
+                    </div>
+                    <div class="summary-stat">
+                        <div class="summary-stat-label">Fiber</div>
+                        <div class="summary-stat-value" id="totalFiber">0g</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);" id="fiberGoalDisplay">Goal: 25g</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="fiberProgress" style="width: 0%; background: #10b981;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="meals-by-type">
+                <!-- Breakfast -->
+                <div class="meal-type-card">
+                    <div class="meal-type-header">
+                        <div class="meal-type-title">Breakfast</div>
+                        <div class="meal-type-emoji">🥞</div>
+                    </div>
+                    <div class="meal-type-total" id="breakfastTotal">0 cal</div>
+                    <div id="breakfastMeals"></div>
+                    <button class="add-meal-btn" onclick="openAddMealMenu('breakfast')">+ Add Meal</button>
+                </div>
+
+                <!-- Lunch -->
+                <div class="meal-type-card">
+                    <div class="meal-type-header">
+                        <div class="meal-type-title">Lunch</div>
+                        <div class="meal-type-emoji">🥗</div>
+                    </div>
+                    <div class="meal-type-total" id="lunchTotal">0 cal</div>
+                    <div id="lunchMeals"></div>
+                    <button class="add-meal-btn" onclick="openAddMealMenu('lunch')">+ Add Meal</button>
+                </div>
+
+                <!-- Dinner -->
+                <div class="meal-type-card">
+                    <div class="meal-type-header">
+                        <div class="meal-type-title">Dinner</div>
+                        <div class="meal-type-emoji">🍽️</div>
+                    </div>
+                    <div class="meal-type-total" id="dinnerTotal">0 cal</div>
+                    <div id="dinnerMeals"></div>
+                    <button class="add-meal-btn" onclick="openAddMealMenu('dinner')">+ Add Meal</button>
+                </div>
+
+                <!-- Snacks -->
+                <div class="meal-type-card">
+                    <div class="meal-type-header">
+                        <div class="meal-type-title">Snacks</div>
+                        <div class="meal-type-emoji">🍎</div>
+                    </div>
+                    <div class="meal-type-total" id="snacksTotal">0 cal</div>
+                    <div id="snacksMeals"></div>
+                    <button class="add-meal-btn" onclick="openAddMealMenu('snacks')">+ Add Meal</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Meals History -->
+        <div style="max-width: 1200px; margin: 2rem auto; padding: 0 2rem;">
+            <div class="meals-section">
+                <h3>📋 Your Meal History</h3>
+                <div id="mealsList" class="meals-list">
+                    <div class="empty-state">
+                        <p>No meals tracked yet. Start by taking a photo!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recipe History -->
+            <div class="meals-section" style="margin-top: 2rem;">
+                <h3>👨‍🍳 Your Recipe History</h3>
+                <div id="recipesList" class="meals-list">
+                    <div class="empty-state">
+                        <p>No recipes saved yet. Generate a vegan or keto recipe to get started!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    <!-- Quick Add Meal Type Modal -->
+    <div id="quickAddModal" class="manual-meal-modal">
+        <div class="manual-meal-content">
+            <div class="manual-meal-header">
+                <h3>Add to Planner</h3>
+                <button class="manual-meal-close" onclick="closeQuickAddModal()">✕</button>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <button class="btn btn-primary" onclick="confirmQuickAdd('breakfast')" style="padding: 1rem;">🥞 Breakfast</button>
+                <button class="btn btn-primary" onclick="confirmQuickAdd('lunch')" style="padding: 1rem;">🥗 Lunch</button>
+                <button class="btn btn-primary" onclick="confirmQuickAdd('dinner')" style="padding: 1rem;">🍽️ Dinner</button>
+                <button class="btn btn-primary" onclick="confirmQuickAdd('snacks')" style="padding: 1rem;">🍎 Snacks</button>
+            </div>
+            <button class="btn btn-secondary" onclick="closeQuickAddModal()" style="width: 100%; margin-top: 1rem; padding: 0.75rem;">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Saved Meals Selector Modal -->
+    <div id="savedMealsModal" class="manual-meal-modal">
+        <div class="manual-meal-content" style="max-width: 600px;">
+            <div class="manual-meal-header">
+                <h3 id="savedMealsTitle">Select a Saved Meal</h3>
+                <button class="manual-meal-close" onclick="closeSavedMealsModal()">✕</button>
+            </div>
+            <div id="savedMealsList" style="max-height: 400px; overflow-y: auto; display: grid; grid-template-columns: 1fr; gap: 0.75rem;">
+                <!-- Populated by JS -->
+            </div>
+            <button class="btn btn-secondary" onclick="closeSavedMealsModal()" style="width: 100%; margin-top: 1rem; padding: 0.75rem;">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Quick Add Meal Type Modal (OLD) -->
+    <div id="quickAddModal" class="manual-meal-modal">
+        <div class="manual-meal-content">
+            <div class="manual-meal-header">
+                <h3>Add to Planner</h3>
+                <button class="manual-meal-close" onclick="closeQuickAddModal()">✕</button>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <button class="btn btn-primary" onclick="confirmQuickAdd('breakfast')" style="padding: 1rem;">🥞 Breakfast</button>
+                <button class="btn btn-primary" onclick="confirmQuickAdd('lunch')" style="padding: 1rem;">🥗 Lunch</button>
+                <button class="btn btn-primary" onclick="confirmQuickAdd('dinner')" style="padding: 1rem;">🍽️ Dinner</button>
+                <button class="btn btn-primary" onclick="confirmQuickAdd('snacks')" style="padding: 1rem;">🍎 Snacks</button>
+            </div>
+            <button class="btn btn-secondary" onclick="closeQuickAddModal()" style="width: 100%; margin-top: 1rem; padding: 0.75rem;">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Manual Meal Modal -->
+    <div id="manualMealModal" class="manual-meal-modal">
+        <div class="manual-meal-content">
+            <div class="manual-meal-header">
+                <h3 id="modalMealTypeTitle">Add Meal</h3>
+                <button class="manual-meal-close" onclick="closeManualMealModal()">✕</button>
+            </div>
+            <form onsubmit="saveManualMeal(event)">
+                <div class="manual-meal-form">
+                    <div class="form-group full">
+                        <label>Meal Name</label>
+                        <input type="text" id="mealName" placeholder="e.g., Chicken Salad" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Calories</label>
+                        <input type="number" id="mealCalories" placeholder="0" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Protein (g)</label>
+                        <input type="number" id="mealProtein" placeholder="0" min="0" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>Carbs (g)</label>
+                        <input type="number" id="mealCarbs" placeholder="0" min="0" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>Fat (g)</label>
+                        <input type="number" id="mealFat" placeholder="0" min="0" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>Fiber (g)</label>
+                        <input type="number" id="mealFiber" placeholder="0" min="0" step="0.1">
+                    </div>
+                </div>
+                <div class="manual-meal-buttons">
+                    <button type="submit" class="btn-primary">Add Meal</button>
+                    <button type="button" class="btn-secondary" onclick="closeManualMealModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_ENDPOINT = 'https://s8w5yfkidb.execute-api.us-east-1.amazonaws.com/prod';
+        let currentAnalysis = null;
+
+        // Check authentication
+        function checkAuth() {
+            const email = localStorage.getItem('email');
+            if (!email) {
+                window.location.href = '/';
+                return;
+            }
+            document.getElementById('userEmail').textContent = email;
+            loadMeals();
+        }
+
+        // Handle photo upload
+        function handlePhotoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imageData = e.target.result;
+                document.getElementById('previewImage').src = imageData;
+                document.getElementById('imagePreview').style.display = 'block';
+                
+                // Convert to base64 for API
+                const base64 = imageData.split(',')[1];
+                analyzeMeal(base64);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Analyze meal with AI
+        function analyzeMeal(imageBase64) {
+            const userId = localStorage.getItem('user_id');
+            showLoading(true);
+            hideError();
+
+            fetch(API_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'analyze_food_photo',
+                    image_base64: imageBase64,
+                    userId: userId
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                showLoading(false);
+                if (data.dish_name) {
+                    currentAnalysis = data;
+                    displayAnalysis(data);
+                } else {
+                    showError('Failed to analyze meal. Please try again.');
+                }
+            })
+            .catch(err => {
+                showLoading(false);
+                console.error('Analysis error:', err);
+                showError('Error analyzing meal. Please try again.');
+            });
+        }
+
+        // Display analysis results
+        function displayAnalysis(data) {
+            document.getElementById('dishName').textContent = data.dish_name;
+            document.getElementById('confidence').textContent = `${(data.confidence * 100).toFixed(0)}% confident`;
+            document.getElementById('caloriesValue').textContent = data.calories || 0;
+            document.getElementById('proteinValue').textContent = `${data.protein_g || 0}g`;
+            document.getElementById('carbsValue').textContent = `${data.carbs_g || 0}g`;
+            document.getElementById('fatValue').textContent = `${data.fat_g || 0}g`;
+            
+            const ingredientsList = document.getElementById('ingredientsList');
+            ingredientsList.innerHTML = (data.ingredients || [])
+                .map(ing => `<div class="ingredient-tag">${ing}</div>`)
+                .join('');
+
+            document.getElementById('analysisImage').src = document.getElementById('previewImage').src;
+            document.getElementById('analysisSection').classList.add('show');
+            
+            // Scroll to results
+            document.getElementById('analysisSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Save meal to database
+        function saveMeal() {
+            if (!currentAnalysis) return;
+
+            const userId = localStorage.getItem('user_id');
+            fetch(API_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'save_meal',
+                    userId: userId,
+                    dish_name: currentAnalysis.dish_name,
+                    calories: currentAnalysis.calories,
+                    protein_g: currentAnalysis.protein_g,
+                    carbs_g: currentAnalysis.carbs_g,
+                    fat_g: currentAnalysis.fat_g
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.mealId) {
+                    alert('Meal saved successfully!');
+                    loadMeals();
+                    analyzeAnother();
+                }
+            })
+            .catch(err => console.error('Save error:', err));
+        }
+
+        // Load meals history
+        function loadMeals() {
+            const userId = localStorage.getItem('user_id');
+            fetch(API_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'get_meals',
+                    userId: userId
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.meals && data.meals.length > 0) {
+                    displayMeals(data.meals);
+                }
+            })
+            .catch(err => console.error('Load meals error:', err));
+        }
+
+        // Display meals
+        function displayMeals(meals) {
+            // Store meals in global array for quick-add
+            allSavedMeals = meals.map(m => ({
+                name: m.dish_name,
+                calories: m.calories,
+                protein: m.protein_g,
+                carbs: m.carbs_g,
+                fat: m.fat_g,
+                fiber: m.fiber_g || 0
+            }));
+
+            const mealsList = document.getElementById('mealsList');
+            mealsList.innerHTML = meals.map(meal => `
+                <div class="meal-card">
+                    <h4>${meal.dish_name}</h4>
+                    <div class="meal-time">${new Date(meal.timestamp).toLocaleDateString()}</div>
+                    <div class="meal-stats">
+                        <div class="meal-stat"><strong>${meal.calories}</strong> cal</div>
+                        <div class="meal-stat"><strong>${meal.protein_g}g</strong> protein</div>
+                        <div class="meal-stat"><strong>${meal.carbs_g}g</strong> carbs</div>
+                        <div class="meal-stat"><strong>${meal.fat_g}g</strong> fat</div>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                        <button class="btn btn-primary" style="flex: 1; padding: 0.5rem; font-size: 0.85rem;" onclick="quickAddMealToPlanner('${meal.dish_name}', ${meal.calories}, ${meal.protein_g}, ${meal.carbs_g}, ${meal.fat_g}, ${meal.fiber_g || 0})">+ Add to Today</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Make Healthy version
+        function makeHealthy() {
+            generateRecipe('healthy');
+        }
+
+        // Make Vegan version
+        function makeVegan() {
+            generateRecipe('vegan');
+        }
+
+        // Make Keto version
+        function makeKeto() {
+            generateRecipe('keto');
+        }
+
+        // Generate recipe with dietary modification
+        function generateRecipe(dietType) {
+            if (!currentAnalysis) return;
+
+            showLoading(true);
+            const userId = localStorage.getItem('user_id');
+
+            fetch(API_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'get_recipe',
+                    dish_name: currentAnalysis.dish_name,
+                    dietary_restriction: `Make this a ${dietType} version. Keep it as close to the original as possible. Include exact quantities and step-by-step instructions. End with the new nutrition info (calories, protein, carbs, fat).`
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                showLoading(false);
+                if (data.recipe) {
+                    displayRecipe(data.recipe, dietType);
+                } else {
+                    showError(`Failed to generate ${dietType} recipe`);
+                }
+            })
+            .catch(err => {
+                showLoading(false);
+                console.error('Recipe error:', err);
+                showError('Error generating recipe');
+            });
+        }
+
+        // Display recipe
+        function displayRecipe(recipeText, dietType) {
+            document.getElementById('recipeTitle').textContent = 
+                `${currentAnalysis.dish_name} - ${dietType.charAt(0).toUpperCase() + dietType.slice(1)} Version`;
+            document.getElementById('recipeContent').innerHTML = 
+                `<p>${recipeText.replace(/\n/g, '</p><p>')}</p>`;
+            document.getElementById('recipeSection').style.display = 'block';
+            
+            // Parse nutrition from recipe text if available
+            // For now, just show basic nutrition estimation
+            document.getElementById('recipeNutrition').innerHTML = `
+                <div class="recipe-nutrition-card">
+                    <div class="recipe-nutrition-label">Est. Calories</div>
+                    <div class="recipe-nutrition-value">${currentAnalysis.calories || 'N/A'}</div>
+                </div>
+                <div class="recipe-nutrition-card">
+                    <div class="recipe-nutrition-label">Protein</div>
+                    <div class="recipe-nutrition-value">${currentAnalysis.protein_g || 'N/A'}g</div>
+                </div>
+                <div class="recipe-nutrition-card">
+                    <div class="recipe-nutrition-label">Carbs</div>
+                    <div class="recipe-nutrition-value">${currentAnalysis.carbs_g || 'N/A'}g</div>
+                </div>
+                <div class="recipe-nutrition-card">
+                    <div class="recipe-nutrition-label">Fat</div>
+                    <div class="recipe-nutrition-value">${currentAnalysis.fat_g || 'N/A'}g</div>
+                </div>
+            `;
+            
+            document.getElementById('recipeSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Save recipe
+        function saveRecipe() {
+            if (!currentAnalysis) return;
+
+            const recipeTitle = document.getElementById('recipeTitle').textContent;
+            const recipeContent = document.getElementById('recipeContent').innerText;
+            const dietType = recipeTitle.includes('Vegan') ? 'Vegan' : recipeTitle.includes('Keto') ? 'Keto' : 'Original';
+
+            const recipe = {
+                id: Date.now(),
+                title: recipeTitle,
+                type: dietType,
+                dish: currentAnalysis.dish_name,
+                content: recipeContent,
+                calories: currentAnalysis.calories,
+                protein: currentAnalysis.protein_g,
+                carbs: currentAnalysis.carbs_g,
+                fat: currentAnalysis.fat_g,
+                savedAt: new Date().toLocaleDateString()
+            };
+
+            savedRecipes.push(recipe);
+            updateRecipeHistory();
+            alert('Recipe saved!');
+        }
+
+        // Close recipe
+        function closeRecipe() {
+            document.getElementById('recipeSection').style.display = 'none';
+        }
+
+        // AI Chat functions
+        let chatHistory = [];
+
+        function displayAnalysis(data) {
+            document.getElementById('dishName').textContent = data.dish_name;
+            
+            // Only show confidence if >= 80%
+            const confidence = data.confidence || 0;
+            const confidenceDiv = document.getElementById('confidence');
+            if (confidence >= 0.8) {
+                confidenceDiv.textContent = `${(confidence * 100).toFixed(0)}% confident`;
+                confidenceDiv.style.display = 'inline-block';
+            } else {
+                confidenceDiv.style.display = 'none';
+            }
+            
+            document.getElementById('caloriesValue').textContent = data.calories || 0;
+            document.getElementById('proteinValue').textContent = `${data.protein_g || 0}g`;
+            document.getElementById('carbsValue').textContent = `${data.carbs_g || 0}g`;
+            document.getElementById('fatValue').textContent = `${data.fat_g || 0}g`;
+            
+            const ingredientsList = document.getElementById('ingredientsList');
+            ingredientsList.innerHTML = (data.ingredients || [])
+                .map(ing => `<div class="ingredient-tag">${ing}</div>`)
+                .join('');
+
+            document.getElementById('analysisImage').src = document.getElementById('previewImage').src;
+            document.getElementById('analysisSection').classList.add('show');
+            
+            // Show chat section only after successful analysis
+            document.getElementById('chatSection').style.display = 'block';
+            chatHistory = [];
+            document.getElementById('chatMessages').innerHTML = '';
+            
+            // Scroll to results
+            document.getElementById('analysisSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            // Add user message to chat
+            addChatMessage(message, 'user');
+            input.value = '';
+
+            // Send to AI
+            askAI(message);
+        }
+
+        function handleChatKeypress(event) {
+            if (event.key === 'Enter') {
+                sendChatMessage();
+            }
+        }
+
+        function addChatMessage(text, sender) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            messageDiv.innerHTML = `<div class="message-bubble">${text}</div>`;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function askAI(question) {
+            if (!currentAnalysis) return;
+
+            fetch(API_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'ask_ai',
+                    question: question,
+                    dish_name: currentAnalysis.dish_name,
+                    nutrition: {
+                        calories: currentAnalysis.calories,
+                        protein: currentAnalysis.protein_g,
+                        carbs: currentAnalysis.carbs_g,
+                        fat: currentAnalysis.fat_g
+                    }
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.response) {
+                    addChatMessage(data.response, 'ai');
+                } else {
+                    addChatMessage('Sorry, I had trouble understanding that. Try asking about the meal differently.', 'ai');
+                }
+            })
+            .catch(err => {
+                console.error('Chat error:', err);
+                addChatMessage('Error connecting to AI. Please try again.', 'ai');
+            });
+        }
+
+        // Camera support (mobile)
+        function openCamera() {
+            const input = document.getElementById('photoInput');
+            input.setAttribute('capture', 'environment');
+            input.click();
+        }
+
+        // Helper functions
+        function showLoading(show) {
+            document.getElementById('loading').classList.toggle('show', show);
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+        }
+
+        function hideError() {
+            document.getElementById('errorMessage').classList.remove('show');
+        }
+
+        // Meal Planner
+        let dailyMeals = {
+            breakfast: [],
+            lunch: [],
+            dinner: [],
+            snacks: []
+        };
+
+        let calorieGoal = 2000;
+        let proteinGoal = 50;
+        let carbGoal = 250;
+        let fiberGoal = 25;
+        let savedRecipes = [];
+
+        let currentMealType = '';
+
+        let pendingQuickAdd = null;
+        let currentMealTypeForAdd = '';
+
+        function openAddMealMenu(mealType) {
+            currentMealTypeForAdd = mealType;
+            const titleText = mealType.charAt(0).toUpperCase() + mealType.slice(1);
+            document.getElementById('savedMealsTitle').textContent = `Add to ${titleText}`;
+            
+            // Build saved meals list
+            const mealsList = document.getElementById('savedMealsList');
+            if (allSavedMeals.length === 0) {
+                mealsList.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                        <p>No saved meals yet. Take a photo and save a meal first!</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="openManualMealModal('${mealType}')" style="width: 100%;">Type a Custom Meal</button>
+                `;
+            } else {
+                mealsList.innerHTML = allSavedMeals.map(meal => `
+                    <button style="text-align: left; padding: 1rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-subtle); cursor: pointer; transition: all 0.3s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'" onclick="quickAddMealToPlanner('${meal.name}', ${meal.calories}, ${meal.protein}, ${meal.carbs}, ${meal.fat}, ${meal.fiber}, '${mealType}')">
+                        <strong>${meal.name}</strong><br>
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">${meal.calories} cal | ${meal.protein}g P | ${meal.carbs}g C | ${meal.fat}g F</span>
+                    </button>
+                `).join('') + `
+                    <button class="btn btn-primary" onclick="openManualMealModal('${mealType}')" style="width: 100%;">+ Type a Custom Meal</button>
+                `;
+            }
+            
+            document.getElementById('savedMealsModal').classList.add('show');
+        }
+
+        function closeSavedMealsModal() {
+            document.getElementById('savedMealsModal').classList.remove('show');
+            currentMealTypeForAdd = '';
+        }
+
+        let allSavedMeals = [];
+
+        function quickAddMealToPlanner(name, calories, protein, carbs, fat, fiber, mealType) {
+            if (!mealType) {
+                // From meal history/recipe - show selector
+                pendingQuickAdd = {
+                    name: name,
+                    calories: calories,
+                    protein: protein,
+                    carbs: carbs,
+                    fat: fat,
+                    fiber: fiber
+                };
+                document.getElementById('quickAddModal').classList.add('show');
+            } else {
+                // Direct add with mealType specified
+                const meal = {
+                    id: Date.now(),
+                    name: name,
+                    calories: calories,
+                    protein: protein,
+                    carbs: carbs,
+                    fat: fat,
+                    fiber: fiber
+                };
+
+                dailyMeals[mealType].push(meal);
+                updateMealPlanner();
+                closeSavedMealsModal();
+                alert(`${meal.name} added to ${mealType}!`);
+            }
+        }
+
+        function confirmQuickAdd(mealType) {
+            if (!pendingQuickAdd) return;
+
+            const meal = {
+                id: Date.now(),
+                name: pendingQuickAdd.name,
+                calories: pendingQuickAdd.calories,
+                protein: pendingQuickAdd.protein,
+                carbs: pendingQuickAdd.carbs,
+                fat: pendingQuickAdd.fat,
+                fiber: pendingQuickAdd.fiber
+            };
+
+            dailyMeals[mealType].push(meal);
+            updateMealPlanner();
+            closeQuickAddModal();
+            alert(`${meal.name} added to ${mealType}!`);
+        }
+
+        function closeQuickAddModal() {
+            document.getElementById('quickAddModal').classList.remove('show');
+            pendingQuickAdd = null;
+        }
+
+        function openManualMealModal(mealType) {
+            currentMealType = mealType;
+            const titleText = mealType.charAt(0).toUpperCase() + mealType.slice(1);
+            document.getElementById('modalMealTypeTitle').textContent = `Add ${titleText}`;
+            document.getElementById('manualMealModal').classList.add('show');
+            // Reset form
+            document.getElementById('mealName').value = '';
+            document.getElementById('mealCalories').value = '';
+            document.getElementById('mealProtein').value = '';
+            document.getElementById('mealCarbs').value = '';
+            document.getElementById('mealFat').value = '';
+            document.getElementById('mealFiber').value = '';
+        }
+
+        function closeManualMealModal() {
+            document.getElementById('manualMealModal').classList.remove('show');
+            currentMealType = '';
+        }
+
+        function saveManualMeal(event) {
+            event.preventDefault();
+            
+            const meal = {
+                id: Date.now(),
+                name: document.getElementById('mealName').value,
+                calories: parseFloat(document.getElementById('mealCalories').value) || 0,
+                protein: parseFloat(document.getElementById('mealProtein').value) || 0,
+                carbs: parseFloat(document.getElementById('mealCarbs').value) || 0,
+                fat: parseFloat(document.getElementById('mealFat').value) || 0,
+                fiber: parseFloat(document.getElementById('mealFiber').value) || 0
+            };
+
+            dailyMeals[currentMealType].push(meal);
+            updateMealPlanner();
+            closeManualMealModal();
+            alert(`${meal.name} added to ${currentMealType}!`);
+        }
+
+        // Close modal on outside click
+        document.addEventListener('click', function(e) {
+            const modal = document.getElementById('manualMealModal');
+            if (e.target === modal) {
+                closeManualMealModal();
+            }
+        });
+
+        function addMealToPlanner(mealType) {
+
+            const meal = {
+                id: Date.now(),
+                name: currentAnalysis.dish_name,
+                calories: currentAnalysis.calories || 0,
+                protein: currentAnalysis.protein_g || 0,
+                carbs: currentAnalysis.carbs_g || 0,
+                fat: currentAnalysis.fat_g || 0,
+                fiber: currentAnalysis.fiber_g || 0
+            };
+
+            dailyMeals[mealType].push(meal);
+            updateMealPlanner();
+            alert(`${meal.name} added to ${mealType}!`);
+        }
+
+        function removeMealFromPlanner(mealType, mealId) {
+            dailyMeals[mealType] = dailyMeals[mealType].filter(m => m.id !== mealId);
+            updateMealPlanner();
+        }
+
+        function updateMealPlanner() {
+            // Update each meal type
+            ['breakfast', 'lunch', 'dinner', 'snacks'].forEach(type => {
+                const meals = dailyMeals[type];
+                const container = document.getElementById(`${type}Meals`);
+                const totalEl = document.getElementById(`${type}Total`);
+
+                const totalCals = meals.reduce((sum, m) => sum + (m.calories || 0), 0);
+                totalEl.textContent = `${totalCals} cal`;
+
+                container.innerHTML = meals.map(meal => `
+                    <div class="meal-item">
+                        <div class="meal-item-info">
+                            <div class="meal-item-name">${meal.name}</div>
+                            <div class="meal-item-cals">${meal.calories} cal | ${meal.protein}g P | ${meal.carbs}g C | ${meal.fat}g F | ${meal.fiber}g Fiber</div>
+                        </div>
+                        <button class="meal-item-remove" onclick="removeMealFromPlanner('${type}', ${meal.id})">×</button>
+                    </div>
+                `).join('');
+            });
+
+            // Update daily totals
+            const allMeals = Object.values(dailyMeals).flat();
+            const totals = {
+                calories: allMeals.reduce((sum, m) => sum + (m.calories || 0), 0),
+                protein: allMeals.reduce((sum, m) => sum + (m.protein || 0), 0),
+                carbs: allMeals.reduce((sum, m) => sum + (m.carbs || 0), 0),
+                fat: allMeals.reduce((sum, m) => sum + (m.fat || 0), 0),
+                fiber: allMeals.reduce((sum, m) => sum + (m.fiber || 0), 0)
+            };
+
+            document.getElementById('totalCalories').textContent = totals.calories;
+            document.getElementById('totalProtein').textContent = `${totals.protein}g`;
+            document.getElementById('totalCarbs').textContent = `${totals.carbs}g`;
+            document.getElementById('totalFat').textContent = `${totals.fat}g`;
+            document.getElementById('totalFiber').textContent = `${totals.fiber}g`;
+
+            // Update progress bars
+            const caloriePercentage = Math.min((totals.calories / calorieGoal) * 100, 100);
+            document.getElementById('caloriesProgress').style.width = `${caloriePercentage}%`;
+
+            const proteinPercentage = Math.min((totals.protein / proteinGoal) * 100, 100);
+            document.getElementById('proteinProgress').style.width = `${proteinPercentage}%`;
+
+            const carbPercentage = Math.min((totals.carbs / carbGoal) * 100, 100);
+            document.getElementById('carbsProgress').style.width = `${carbPercentage}%`;
+
+            const fiberPercentage = Math.min((totals.fiber / fiberGoal) * 100, 100);
+            document.getElementById('fiberProgress').style.width = `${fiberPercentage}%`;
+        }
+
+        function toggleGoalEdit() {
+            const ui = document.getElementById('goalEditUI');
+            ui.style.display = ui.style.display === 'none' ? 'block' : 'none';
+            document.getElementById('calorieGoalInput').value = calorieGoal;
+            document.getElementById('proteinGoalInput').value = proteinGoal;
+            document.getElementById('carbGoalInput').value = carbGoal;
+            document.getElementById('fiberGoalInput').value = fiberGoal;
+        }
+
+        function saveGoals() {
+            const newCalorieGoal = parseInt(document.getElementById('calorieGoalInput').value);
+            const newProteinGoal = parseInt(document.getElementById('proteinGoalInput').value);
+            const newCarbGoal = parseInt(document.getElementById('carbGoalInput').value);
+            const newFiberGoal = parseInt(document.getElementById('fiberGoalInput').value);
+            
+            if (newCalorieGoal > 0 && newProteinGoal > 0 && newCarbGoal > 0 && newFiberGoal > 0) {
+                calorieGoal = newCalorieGoal;
+                proteinGoal = newProteinGoal;
+                carbGoal = newCarbGoal;
+                fiberGoal = newFiberGoal;
+                document.getElementById('goalEditUI').style.display = 'none';
+                
+                // Update goal displays
+                document.getElementById('calorieGoalDisplay').textContent = `Goal: ${calorieGoal}`;
+                document.getElementById('proteinGoalDisplay').textContent = `Goal: ${proteinGoal}g`;
+                document.getElementById('carbGoalDisplay').textContent = `Goal: ${carbGoal}g`;
+                document.getElementById('fiberGoalDisplay').textContent = `Goal: ${fiberGoal}g`;
+                
+                updateMealPlanner();
+                alert(`Goals set!\nCalories: ${calorieGoal}\nProtein: ${proteinGoal}g\nCarbs: ${carbGoal}g\nFiber: ${fiberGoal}g`);
+            }
+        }
+
+        function updateRecipeHistory() {
+            const container = document.getElementById('recipesList');
+            if (savedRecipes.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>No recipes saved yet. Generate a vegan or keto recipe to get started!</p></div>';
+                return;
+            }
+
+            container.innerHTML = savedRecipes.map(recipe => `
+                <div class="meal-card">
+                    <div style="display: inline-block; background: rgba(8, 145, 178, 0.1); color: var(--primary); padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem; margin-bottom: 0.5rem;">${recipe.type}</div>
+                    <h4>${recipe.title}</h4>
+                    <div class="meal-time">Saved: ${recipe.savedAt}</div>
+                    <div class="meal-stats">
+                        <div class="meal-stat"><strong>${recipe.calories}</strong> cal</div>
+                        <div class="meal-stat"><strong>${recipe.protein}g</strong> protein</div>
+                        <div class="meal-stat"><strong>${recipe.carbs}g</strong> carbs</div>
+                        <div class="meal-stat"><strong>${recipe.fat}g</strong> fat</div>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                        <button class="btn btn-primary" style="flex: 1; padding: 0.5rem; font-size: 0.85rem;" onclick="quickAddMealToPlanner('${recipe.title}', ${recipe.calories}, ${recipe.protein}, ${recipe.carbs}, ${recipe.fat}, 0)">+ Add to Today</button>
+                        <button class="btn btn-secondary" style="flex: 1; padding: 0.5rem; font-size: 0.85rem;" onclick="viewRecipe(${recipe.id})">View</button>
+                        <button class="btn btn-secondary" style="flex: 1; padding: 0.5rem; font-size: 0.85rem;" onclick="deleteRecipe(${recipe.id})">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function viewRecipe(recipeId) {
+            const recipe = savedRecipes.find(r => r.id === recipeId);
+            if (recipe) {
+                alert(`${recipe.title}\n\n${recipe.content}`);
+            }
+        }
+
+        function deleteRecipe(recipeId) {
+            savedRecipes = savedRecipes.filter(r => r.id !== recipeId);
+            updateRecipeHistory();
+        }
+
+        function logout() {
+            localStorage.removeItem('user_id');
+            localStorage.removeItem('email');
+            window.location.href = '/';
+        }
+
+        // Initialize
+        window.addEventListener('load', checkAuth);
+    </script>
+</body>
+</html>
