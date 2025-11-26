@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PlateAI - Intelligent Food Intelligence</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         * {
             margin: 0;
@@ -506,6 +507,34 @@
         .error.show {
             display: block;
         }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 1.5rem 0;
+            gap: 1rem;
+        }
+
+        .divider-line {
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .divider-text {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        #google-signin-button {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        .google-button {
+            width: 100%;
+        }
     </style>
 </head>
 <body>
@@ -644,6 +673,14 @@
 
             <div class="error" id="signUpError"></div>
 
+            <div id="google-signup-button"></div>
+
+            <div class="divider">
+                <div class="divider-line"></div>
+                <div class="divider-text">or</div>
+                <div class="divider-line"></div>
+            </div>
+
             <form onsubmit="handleSignUp(event)">
                 <div class="form-group">
                     <label>Email Address</label>
@@ -675,6 +712,14 @@
 
             <div class="error" id="signInError"></div>
 
+            <div id="google-signin-button"></div>
+
+            <div class="divider">
+                <div class="divider-line"></div>
+                <div class="divider-text">or</div>
+                <div class="divider-line"></div>
+            </div>
+
             <form onsubmit="handleSignIn(event)">
                 <div class="form-group">
                     <label>Email Address</label>
@@ -703,6 +748,62 @@
     </footer>
 
     <script>
+        const GOOGLE_CLIENT_ID = '763043938348-grfgm9oj02f2147ea2cmnd3q5qo243dv.apps.googleusercontent.com';
+        const API_ENDPOINT = 'https://s8w5yfkidb.execute-api.us-east-1.amazonaws.com/prod';
+
+        // Initialize Google Sign In
+        function initializeGoogleSignIn() {
+            google.accounts.id.initialize({
+                client_id: GOOGLE_CLIENT_ID,
+                callback: handleGoogleSignIn
+            });
+
+            // Render Sign In button
+            google.accounts.id.renderButton(
+                document.getElementById('google-signin-button'),
+                { theme: 'outline', size: 'large', width: '100%' }
+            );
+
+            // Render Sign Up button
+            google.accounts.id.renderButton(
+                document.getElementById('google-signup-button'),
+                { theme: 'outline', size: 'large', width: '100%' }
+            );
+        }
+
+        // Handle Google Sign In response
+        function handleGoogleSignIn(response) {
+            const token = response.credential;
+            
+            // Send token to Lambda to validate and create/get user
+            fetch(API_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'google_auth',
+                    google_token: token
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    // Store user info
+                    localStorage.setItem('user_id', data.user_id);
+                    localStorage.setItem('email', data.email);
+                    alert('Signed in as ' + data.email);
+                    closeModal('signInModal');
+                    closeModal('signUpModal');
+                    // Redirect or update UI
+                } else {
+                    alert('Sign in failed: ' + data.message);
+                }
+            })
+            .catch(err => {
+                console.error('Google auth error:', err);
+                alert('Sign in failed. Try again.');
+            });
+        }
+
         function openSignUp() {
             document.getElementById('signUpModal').classList.add('show');
         }
@@ -738,9 +839,40 @@
             const email = document.getElementById('signUpEmail').value;
             const password = document.getElementById('signUpPassword').value;
             
-            // TODO: Connect to AWS Cognito
-            alert('Sign up coming soon! Email: ' + email);
-            closeModal('signUpModal');
+            if (password.length < 6) {
+                document.getElementById('signUpError').textContent = 'Password must be at least 6 characters';
+                document.getElementById('signUpError').classList.add('show');
+                return;
+            }
+
+            // Send to Lambda to create user
+            fetch(API_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'create_user',
+                    email: email,
+                    password: password
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    localStorage.setItem('user_id', data.user_id);
+                    localStorage.setItem('email', email);
+                    alert('Account created! Welcome to PlateAI');
+                    closeModal('signUpModal');
+                    // Redirect or update UI
+                } else {
+                    document.getElementById('signUpError').textContent = data.message || 'Sign up failed';
+                    document.getElementById('signUpError').classList.add('show');
+                }
+            })
+            .catch(err => {
+                console.error('Sign up error:', err);
+                document.getElementById('signUpError').textContent = 'Sign up failed. Try again.';
+                document.getElementById('signUpError').classList.add('show');
+            });
         }
 
         function handleSignIn(e) {
@@ -748,10 +880,38 @@
             const email = document.getElementById('signInEmail').value;
             const password = document.getElementById('signInPassword').value;
             
-            // TODO: Connect to AWS Cognito
-            alert('Sign in coming soon! Email: ' + email);
-            closeModal('signInModal');
+            // Send to Lambda to verify user
+            fetch(API_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'verify_user',
+                    email: email,
+                    password: password
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    localStorage.setItem('user_id', data.user_id);
+                    localStorage.setItem('email', email);
+                    alert('Signed in as ' + email);
+                    closeModal('signInModal');
+                    // Redirect or update UI
+                } else {
+                    document.getElementById('signInError').textContent = data.message || 'Sign in failed';
+                    document.getElementById('signInError').classList.add('show');
+                }
+            })
+            .catch(err => {
+                console.error('Sign in error:', err);
+                document.getElementById('signInError').textContent = 'Sign in failed. Try again.';
+                document.getElementById('signInError').classList.add('show');
+            });
         }
+
+        // Initialize when page loads
+        window.addEventListener('load', initializeGoogleSignIn);
     </script>
 </body>
 </html>
