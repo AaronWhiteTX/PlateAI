@@ -76,8 +76,21 @@
             .nav-right {
                 flex: 1;
                 gap: 0.5rem;
-                flex-direction: column;
-                align-items: flex-end;
+                flex-direction: row;
+                align-items: center;
+                justify-content: flex-end;
+            }
+
+            #userEmail {
+                display: none !important;
+            }
+
+            .nav-right .btn {
+                display: none;
+            }
+
+            .nav-right .menu-btn {
+                display: block !important;
             }
 
             #userEmail {
@@ -126,6 +139,62 @@
         .btn-secondary:hover {
             color: var(--primary);
             border-color: var(--primary);
+        }
+
+        .menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            font-size: 1.5rem;
+            padding: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .menu-btn:hover {
+            transform: scale(1.1);
+        }
+
+        /* Mobile Menu Dropdown */
+        .mobile-menu {
+            display: none;
+            position: absolute;
+            top: 60px;
+            right: 1rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            z-index: 999;
+            min-width: 150px;
+        }
+
+        .mobile-menu.show {
+            display: block;
+        }
+
+        .mobile-menu button {
+            display: block;
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            background: none;
+            text-align: left;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.95rem;
+            color: var(--text);
+            transition: all 0.3s ease;
+        }
+
+        .mobile-menu button:last-child {
+            border-bottom: none;
+        }
+
+        .mobile-menu button:hover {
+            background: var(--bg-subtle);
+            color: var(--primary);
         }
 
         /* Main Container */
@@ -1006,8 +1075,18 @@
             <div class="logo">PlateAI</div>
             <div class="nav-right">
                 <span id="userEmail" style="color: var(--text-muted); font-size: 0.9rem; margin-right: 1rem;"></span>
+                <button class="menu-btn" onclick="toggleMobileMenu()">☰</button>
+                <button class="btn btn-secondary" onclick="openAICoachModal()" style="font-size: 0.85rem;">🤖 AI Coach</button>
+                <button class="btn btn-secondary" onclick="openSettingsModal()" style="font-size: 0.85rem;">⚙️ Settings</button>
                 <button class="btn btn-secondary" onclick="logout()">Sign Out</button>
             </div>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div id="mobileMenu" class="mobile-menu">
+            <button onclick="openAICoachModal(); closeMobileMenu();">🤖 AI Coach</button>
+            <button onclick="openSettingsModal(); closeMobileMenu();">⚙️ Settings</button>
+            <button onclick="logout();">Sign Out</button>
         </div>
     </nav>
 
@@ -1248,6 +1327,64 @@
                 </div>
             </div>
         </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="manual-meal-modal">
+        <div class="manual-meal-content">
+            <div class="manual-meal-header">
+                <h3>⚙️ Settings</h3>
+                <button class="manual-meal-close" onclick="closeSettingsModal()">✕</button>
+            </div>
+
+            <div id="settingsError" class="error" style="margin-bottom: 1rem;"></div>
+            <div id="settingsSuccess" style="background: #d1fae5; color: #065f46; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; display: none;"></div>
+
+            <div id="passwordSection">
+                <h4 style="color: var(--text); margin-bottom: 1rem; font-size: 1.1rem;">Change Password</h4>
+                <div id="googleAuthMessage" style="background: #dbeafe; color: #0c4a6e; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; display: none;">
+                    <p>You signed up with Google. Password change is not available for Google accounts.</p>
+                </div>
+                
+                <form id="passwordForm" onsubmit="handlePasswordChange(event)" style="display: none;">
+                    <div class="form-group full">
+                        <label>Current Password</label>
+                        <input type="password" id="currentPassword" placeholder="Enter current password" required>
+                    </div>
+                    <div class="form-group full">
+                        <label>New Password</label>
+                        <input type="password" id="newPassword" placeholder="Enter new password" required minlength="6">
+                    </div>
+                    <div class="form-group full">
+                        <label>Confirm New Password</label>
+                        <input type="password" id="confirmPassword" placeholder="Confirm new password" required minlength="6">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Update Password</button>
+                </form>
+            </div>
+
+            <button class="btn btn-secondary" onclick="closeSettingsModal()" style="width: 100%; margin-top: 2rem;">Close</button>
+            <button class="btn btn-danger" onclick="logout()" style="width: 100%; margin-top: 0.5rem; background: #ef4444; color: white;">Sign Out</button>
+        </div>
+    </div>
+
+    <!-- AI Food Coach Modal -->
+    <div id="aiCoachModal" class="manual-meal-modal">
+        <div class="manual-meal-content" style="max-width: 600px; height: 600px; display: flex; flex-direction: column;">
+            <div class="manual-meal-header">
+                <h3>🤖 AI Food Coach</h3>
+                <button class="manual-meal-close" onclick="closeAICoachModal()">✕</button>
+            </div>
+            <div id="coachMessages" class="chat-messages" style="flex: 1; margin-bottom: 1rem;">
+                <div class="message ai">
+                    <div class="message-bubble">Hi! I'm your AI Food Coach. Ask me anything about nutrition, your daily meals, or health goals!</div>
+                </div>
+            </div>
+            <div class="chat-input-group" style="gap: 0.75rem;">
+                <input type="text" id="coachInput" placeholder="Ask about your nutrition..." onkeypress="handleCoachKeypress(event)">
+                <button class="btn btn-primary" onclick="sendCoachMessage()" style="padding: 0.75rem 1.5rem;">Send</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Quick Add Meal Type Modal -->
     <div id="quickAddModal" class="manual-meal-modal">
@@ -2038,6 +2175,234 @@
             localStorage.removeItem('user_id');
             localStorage.removeItem('email');
             window.location.href = '/';
+        }
+
+        // Mobile Menu
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            menu.classList.toggle('show');
+        }
+
+        function closeMobileMenu() {
+            document.getElementById('mobileMenu').classList.remove('show');
+        }
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', function(e) {
+            const menu = document.getElementById('mobileMenu');
+            const menuBtn = document.querySelector('.menu-btn');
+            if (!menu.contains(e.target) && !menuBtn.contains(e.target)) {
+                closeMobileMenu();
+            }
+        });
+
+        // Settings
+        let userAuthMethod = 'email'; // Track if user logged in with google or email
+
+        function openSettingsModal() {
+            document.getElementById('settingsModal').classList.add('show');
+            checkAuthMethod();
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settingsModal').classList.remove('show');
+            document.getElementById('settingsError').innerHTML = '';
+            document.getElementById('settingsSuccess').style.display = 'none';
+            document.getElementById('passwordForm').reset();
+        }
+
+        function checkAuthMethod() {
+            const email = localStorage.getItem('email');
+            const authMethod = localStorage.getItem('authMethod') || 'email';
+            
+            if (authMethod === 'google') {
+                document.getElementById('googleAuthMessage').style.display = 'block';
+                document.getElementById('passwordForm').style.display = 'none';
+            } else {
+                document.getElementById('googleAuthMessage').style.display = 'none';
+                document.getElementById('passwordForm').style.display = 'block';
+            }
+        }
+
+        function handlePasswordChange(event) {
+            event.preventDefault();
+
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const email = localStorage.getItem('email');
+
+            // Validate passwords match
+            if (newPassword !== confirmPassword) {
+                showSettingsError('New passwords do not match');
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                showSettingsError('Password must be at least 6 characters');
+                return;
+            }
+
+            // Send to Lambda
+            fetch(API_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'change_password',
+                    email: email,
+                    current_password: currentPassword,
+                    new_password: newPassword
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showSettingsSuccess('Password changed successfully!');
+                    document.getElementById('passwordForm').reset();
+                    setTimeout(() => closeSettingsModal(), 2000);
+                } else {
+                    showSettingsError(data.message || 'Failed to change password');
+                }
+            })
+            .catch(err => {
+                console.error('Password change error:', err);
+                showSettingsError('Error changing password. Please try again.');
+            });
+        }
+
+        function showSettingsError(message) {
+            document.getElementById('settingsError').textContent = message;
+            document.getElementById('settingsError').style.display = 'block';
+        }
+
+        function showSettingsSuccess(message) {
+            document.getElementById('settingsSuccess').textContent = message;
+            document.getElementById('settingsSuccess').style.display = 'block';
+        }
+
+        // AI Food Coach
+        let coachHistory = [];
+
+        function openAICoachModal() {
+            document.getElementById('aiCoachModal').classList.add('show');
+        }
+
+        function closeAICoachModal() {
+            document.getElementById('aiCoachModal').classList.remove('show');
+        }
+
+        function sendCoachMessage() {
+            const input = document.getElementById('coachInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            // Add user message
+            addCoachMessage(message, 'user');
+            input.value = '';
+
+            // Show thinking message
+            const messagesDiv = document.getElementById('coachMessages');
+            const thinkingDiv = document.createElement('div');
+            thinkingDiv.id = 'thinkingMessage';
+            thinkingDiv.className = 'message ai';
+            thinkingDiv.innerHTML = `<div class="message-bubble" style="color: var(--text-muted); font-style: italic;">Thinking...</div>`;
+            messagesDiv.appendChild(thinkingDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+            // Get current nutrition totals
+            const allMeals = Object.values(dailyMeals).flat();
+            const totals = {
+                calories: allMeals.reduce((sum, m) => sum + (m.calories || 0), 0),
+                protein: allMeals.reduce((sum, m) => sum + (m.protein || 0), 0),
+                carbs: allMeals.reduce((sum, m) => sum + (m.carbs || 0), 0),
+                fat: allMeals.reduce((sum, m) => sum + (m.fat || 0), 0),
+                fiber: allMeals.reduce((sum, m) => sum + (m.fiber || 0), 0)
+            };
+
+            // Send to AI
+            askAICoach(message, totals);
+        }
+
+        function handleCoachKeypress(event) {
+            if (event.key === 'Enter') {
+                sendCoachMessage();
+            }
+        }
+
+        function addCoachMessage(text, sender) {
+            const messagesDiv = document.getElementById('coachMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            messageDiv.innerHTML = `<div class="message-bubble">${text}</div>`;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function askAICoach(question, nutrition) {
+            fetch(API_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'ask_ai',
+                    question: question,
+                    nutrition: nutrition,
+                    goals: {
+                        calories: calorieGoal,
+                        protein: proteinGoal,
+                        carbs: carbGoal,
+                        fiber: fiberGoal
+                    },
+                    context: 'User is asking about their nutrition, meals, or health goals. Provide helpful, personalized advice based on their current intake and goals.'
+                })
+            })
+            .then(res => {
+                console.log('Response status:', res.status);
+                console.log('Response headers:', {
+                    'content-type': res.headers.get('content-type'),
+                    'access-control-allow-origin': res.headers.get('access-control-allow-origin')
+                });
+                return res.text();
+            })
+            .then(text => {
+                console.log('Raw response text:', text);
+                
+                const thinkingMsg = document.getElementById('thinkingMessage');
+                if (thinkingMsg) thinkingMsg.remove();
+
+                try {
+                    const data = JSON.parse(text);
+                    console.log('Parsed JSON:', data);
+                    
+                    let response = data.response || data;
+                    if (typeof response === 'string') {
+                        try {
+                            response = JSON.parse(response);
+                        } catch (e) {
+                            console.log('Could not parse response as JSON, using as string');
+                        }
+                    }
+                    
+                    console.log('Final response object:', response);
+                    
+                    if (response.response) {
+                        addCoachMessage(response.response, 'ai');
+                    } else if (data.response) {
+                        addCoachMessage(data.response, 'ai');
+                    } else {
+                        addCoachMessage('Sorry, I had trouble understanding that. Try asking about your nutrition or meal plan.', 'ai');
+                    }
+                } catch (parseError) {
+                    console.error('JSON parse error:', parseError);
+                    addCoachMessage('Error parsing response. Check console for details.', 'ai');
+                }
+            })
+            .catch(err => {
+                console.error('Fetch error:', err);
+                const thinkingMsg = document.getElementById('thinkingMessage');
+                if (thinkingMsg) thinkingMsg.remove();
+                
+                addCoachMessage('Error connecting to AI Coach. Check console for details.', 'ai');
+            });
         }
 
         // Initialize
