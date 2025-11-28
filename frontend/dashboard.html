@@ -1,3 +1,4 @@
+<!-- Version 2.0.1 - Cache Buster -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1263,9 +1264,11 @@
 
                     <div class="action-buttons">
                         <button class="btn btn-primary" onclick="saveMeal()">💾 Save Meal</button>
-                        <button class="btn btn-secondary" onclick="makeVegan()">🥗 Make Vegan</button>
-                        <button class="btn btn-secondary" onclick="makeKeto()">🥩 Make Keto</button>
-                        <button class="btn btn-secondary" onclick="makeHealthy()">✨ Make Healthy</button>
+                        <button class="btn btn-secondary" onclick="openMealCorrectionModal()">✏️ Correct My Meal</button>
+                        <button class="btn btn-secondary" onclick="findRecipe()">📖 Find Recipe</button>
+                        <button class="btn btn-secondary" data-diet-btn="vegan" onclick="makeVegan()">🥗 Make Vegan</button>
+                        <button class="btn btn-secondary" data-diet-btn="keto" onclick="makeKeto()">🥩 Make Keto</button>
+                        <button class="btn btn-secondary" data-diet-btn="healthy" onclick="makeHealthy()">✨ Make Healthy</button>
                         <button class="btn btn-secondary" onclick="analyzeAnother()">📸 Analyze Another</button>
                     </div>
                 </div>
@@ -1422,20 +1425,20 @@
         <!-- Meals History -->
         <div style="max-width: 1200px; margin: 2rem auto; padding: 0 2rem;">
             <div class="meals-section">
-                <h3>📋 Your Meal History</h3>
+                <h3>💾 Saved Meals</h3>
                 <div id="mealsList" class="meals-list">
                     <div class="empty-state">
-                        <p>No meals tracked yet. Start by taking a photo!</p>
+                        <p>No meals saved yet. Start by taking a photo!</p>
                     </div>
                 </div>
             </div>
 
             <!-- Recipe History -->
             <div class="meals-section" style="margin-top: 2rem;">
-                <h3>👨‍🍳 Your Recipe History</h3>
+                <h3>📖 Recipe History</h3>
                 <div id="recipesList" class="meals-list">
                     <div class="empty-state">
-                        <p>No recipes saved yet. Generate a vegan or keto recipe to get started!</p>
+                        <p>No recipes saved yet. Generate a recipe to get started!</p>
                     </div>
                 </div>
             </div>
@@ -1602,6 +1605,8 @@
             }
             document.getElementById('userEmail').textContent = email;
             loadMeals();
+            loadRecipeHistory();
+            loadTodayPlan();
         }
 
         // Handle photo upload
@@ -1633,18 +1638,21 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     action: 'analyze_food_photo',
-                    image_base64: imageBase64,
+                    image: imageBase64,
                     userId: userId
                 })
             })
             .then(res => res.json())
             .then(data => {
                 showLoading(false);
+                console.log('API Response:', data);
                 if (data.dish_name) {
                     currentAnalysis = data;
                     displayAnalysis(data);
                 } else {
-                    showError('Failed to analyze meal. Please try again.');
+                    const errorMsg = data.error || data.message || 'Failed to analyze meal. Please try again.';
+                    showError(errorMsg);
+                    console.error('Analysis failed:', data);
                 }
             })
             .catch(err => {
@@ -1655,58 +1663,72 @@
         }
 
         // Display analysis results
-        function displayAnalysis(data) {
-            document.getElementById('dishName').textContent = data.dish_name;
-            document.getElementById('confidence').textContent = `${(data.confidence * 100).toFixed(0)}% confident`;
-            document.getElementById('caloriesValue').textContent = data.calories || 0;
-            document.getElementById('proteinValue').textContent = `${data.protein_g || 0}g`;
-            document.getElementById('carbsValue').textContent = `${data.carbs_g || 0}g`;
-            document.getElementById('fatValue').textContent = `${data.fat_g || 0}g`;
-            
-            const ingredientsList = document.getElementById('ingredientsList');
-            ingredientsList.innerHTML = (data.ingredients || [])
-                .map(ing => `<div class="ingredient-tag">${ing}</div>`)
-                .join('');
-
-            document.getElementById('analysisImage').src = document.getElementById('previewImage').src;
-            document.getElementById('analysisSection').classList.add('show');
-            
-            // Scroll to results
-            document.getElementById('analysisSection').scrollIntoView({ behavior: 'smooth' });
-        }
 
         // Save meal to database
         function saveMeal() {
-            if (!currentAnalysis) return;
+            if (!currentAnalysis) {
+                showError('No meal to save');
+                return;
+            }
 
+            console.log('Saving meal:', currentAnalysis);
             const userId = localStorage.getItem('user_id');
+            
+            if (!userId) {
+                showError('User not logged in');
+                return;
+            }
+            
+            showLoading(true);
+            
+            const mealData = {
+                action: 'save_meal',
+                userId: userId,
+                dish_name: currentAnalysis.dish_name,
+                calories: currentAnalysis.calories || 0,
+                protein_g: currentAnalysis.protein_g || 0,
+                carbs_g: currentAnalysis.carbs_g || 0,
+                fat_g: currentAnalysis.fat_g || 0,
+                fiber_g: currentAnalysis.fiber_g || 0
+            };
+            
+            console.log('Sending meal data:', mealData);
+            
             fetch(API_ENDPOINT, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'save_meal',
-                    userId: userId,
-                    dish_name: currentAnalysis.dish_name,
-                    calories: currentAnalysis.calories,
-                    protein_g: currentAnalysis.protein_g,
-                    carbs_g: currentAnalysis.carbs_g,
-                    fat_g: currentAnalysis.fat_g
-                })
+                body: JSON.stringify(mealData)
             })
-            .then(res => res.json())
+            .then(res => {
+                console.log('Response status:', res.status);
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                }
+                return res.json();
+            })
             .then(data => {
+                showLoading(false);
+                console.log('Save meal response:', data);
                 if (data.mealId) {
-                    alert('Meal saved successfully!');
+                    showSuccess('Meal saved successfully!');
                     loadMeals();
-                    analyzeAnother();
+                } else {
+                    const errorMsg = data.error || data.message || 'Failed to save meal';
+                    showError(errorMsg);
+                    console.error('Save meal failed:', data);
                 }
             })
-            .catch(err => console.error('Save error:', err));
+            .catch(err => {
+                showLoading(false);
+                console.error('Save meal error:', err);
+                showError('Error saving meal: ' + err.message);
+            });
         }
 
         // Load meals history
         function loadMeals() {
             const userId = localStorage.getItem('user_id');
+            console.log('Loading meals for userId:', userId);
             fetch(API_ENDPOINT, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1715,30 +1737,35 @@
                     userId: userId
                 })
             })
-            .then(res => res.json())
+            .then(res => {
+                console.log('Get meals response status:', res.status);
+                return res.json();
+            })
             .then(data => {
-                if (data.meals && data.meals.length > 0) {
+                console.log('Loaded meals:', data);
+                if (data.success === false || data.message) {
+                    console.error('Get meals error:', data.message || data.error);
+                    showError('Error loading meals: ' + (data.message || 'Unknown error'));
+                } else if (data.meals && data.meals.length > 0) {
                     displayMeals(data.meals);
+                } else {
+                    console.log('No meals found or empty array');
                 }
             })
-            .catch(err => console.error('Load meals error:', err));
+            .catch(err => {
+                console.error('Load meals error:', err);
+                showError('Failed to load meals');
+            });
         }
 
         // Display meals
         function displayMeals(meals) {
-            // Store meals in global array for quick-add
-            allSavedMeals = meals.map(m => ({
-                name: m.dish_name,
-                calories: m.calories,
-                protein: m.protein_g,
-                carbs: m.carbs_g,
-                fat: m.fat_g,
-                fiber: m.fiber_g || 0
-            }));
+            // Store meals globally with full data
+            allSavedMeals = meals;
 
             const mealsList = document.getElementById('mealsList');
             mealsList.innerHTML = meals.map(meal => `
-                <div class="meal-card">
+                <div class="meal-card" onclick="viewMealDetail('${meal.mealId}')" style="cursor: pointer;">
                     <h4>${meal.dish_name}</h4>
                     <div class="meal-time">${new Date(meal.timestamp).toLocaleDateString()}</div>
                     <div class="meal-stats">
@@ -1748,33 +1775,210 @@
                         <div class="meal-stat"><strong>${meal.fat_g}g</strong> fat</div>
                     </div>
                     <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-                        <button class="btn btn-primary" style="flex: 1; padding: 0.5rem; font-size: 0.85rem;" onclick="quickAddMealToPlanner('${meal.dish_name}', ${meal.calories}, ${meal.protein_g}, ${meal.carbs_g}, ${meal.fat_g}, ${meal.fiber_g || 0})">+ Add to Today</button>
+                        <button class="btn btn-primary" style="flex: 1; padding: 0.5rem; font-size: 0.85rem;" onclick="event.stopPropagation(); quickAddMealToPlanner('${meal.dish_name}', ${meal.calories}, ${meal.protein_g}, ${meal.carbs_g}, ${meal.fat_g}, ${meal.fiber_g || 0})">+ Add to Today</button>
+                        <button class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem;" onclick="event.stopPropagation(); deleteMeal('${meal.mealId}')">Delete</button>
                     </div>
                 </div>
             `).join('');
         }
 
+        function viewMealDetail(mealId) {
+            const meal = allSavedMeals.find(m => m.mealId === mealId);
+            if (!meal) return;
+            
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:2000;display:flex;align-items:center;justify-content:center;padding:1rem;';
+            modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
+            
+            const content = document.createElement('div');
+            content.style.cssText = 'background:white;padding:2rem;border-radius:12px;max-width:600px;width:100%;max-height:90vh;overflow-y:auto;';
+            
+            content.innerHTML = `
+                <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:1.5rem;">
+                    <h2 style="margin:0;">${meal.dish_name}</h2>
+                    <button onclick="this.closest('[style*=fixed]').remove()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--text-muted);">×</button>
+                </div>
+                ${meal.photo_url ? `<img src="${meal.photo_url}" style="width:100%;border-radius:8px;margin-bottom:1.5rem;">` : ''}
+                <div style="background:var(--bg-subtle);padding:1rem;border-radius:8px;margin-bottom:1rem;">
+                    <h3 style="margin:0 0 0.5rem 0;">Nutrition Facts</h3>
+                    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;">
+                        <div><strong>Calories:</strong> ${meal.calories}</div>
+                        <div><strong>Protein:</strong> ${meal.protein_g}g</div>
+                        <div><strong>Carbs:</strong> ${meal.carbs_g}g</div>
+                        <div><strong>Fat:</strong> ${meal.fat_g}g</div>
+                        <div><strong>Fiber:</strong> ${meal.fiber_g || 0}g</div>
+                    </div>
+                </div>
+                <div style="color:var(--text-muted);font-size:0.875rem;">
+                    Saved on ${new Date(meal.timestamp).toLocaleString()}
+                </div>
+            `;
+            
+            modal.appendChild(content);
+            document.body.appendChild(modal);
+        }
+
+        function deleteMeal(mealId) {
+            if (!confirm('Delete this meal?')) return;
+            
+            // Remove from UI immediately
+            allSavedMeals = allSavedMeals.filter(m => m.mealId !== mealId);
+            displayMeals(allSavedMeals);
+            
+            const userId = localStorage.getItem('user_id');
+            showLoading(true);
+            
+            fetch(API_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'delete_meal',
+                    userId: userId,
+                    mealId: mealId
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                showLoading(false);
+                if (data.success) {
+                    showSuccess('Meal deleted!');
+                } else {
+                    showError('Failed to delete meal');
+                    loadMeals(); // Reload if failed
+                }
+            })
+            .catch(err => {
+                showLoading(false);
+                showError('Error deleting meal');
+                loadMeals(); // Reload if error
+            });
+        }
+
         // Make Healthy version
         function makeHealthy() {
-            generateRecipe('healthy');
+            generateRecipe('healthy', true);
         }
 
         // Make Vegan version
         function makeVegan() {
-            generateRecipe('vegan');
+            generateRecipe('vegan', true);
+        }
+
+        // Meal Correction Modal
+        function openMealCorrectionModal() {
+            if (!currentAnalysis) {
+                showError('No meal to correct');
+                return;
+            }
+            
+            const modal = document.createElement('div');
+            modal.id = 'correctionModal';
+            modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:2000;display:flex;align-items:center;justify-content:center;';
+            
+            const innerDiv = document.createElement('div');
+            innerDiv.style.cssText = 'background:white;padding:2rem;border-radius:12px;max-width:500px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,0.3);';
+            innerDiv.innerHTML = `
+                <h3 style="margin-bottom:1.5rem;color:var(--text);">Correct My Meal</h3>
+                <div style="margin-bottom:1.5rem;">
+                    <label style="display:block;margin-bottom:0.5rem;font-weight:500;">Search Meal Name</label>
+                    <input id="corrName" type="text" placeholder="e.g., Grilled Chicken Salad" value="${currentAnalysis.dish_name || ''}" style="width:100%;padding:0.75rem;border:1px solid var(--border);border-radius:6px;font-size:1rem;">
+                    <p style="font-size:0.875rem;color:var(--text-muted);margin-top:0.5rem;">AI will analyze the meal and provide nutrition info</p>
+                </div>
+                <div style="display:flex;gap:1rem;">
+                    <button onclick="submitMealCorrection()" class="btn btn-primary" style="flex:1;">Search & Correct</button>
+                    <button onclick="closeMealCorrectionModal()" class="btn btn-secondary" style="flex:1;">Cancel</button>
+                </div>
+            `;
+            
+            modal.appendChild(innerDiv);
+            document.body.appendChild(modal);
+            
+            modal.onclick = function(e) {
+                if (e.target === modal) closeMealCorrectionModal();
+            };
+        }
+
+        function closeMealCorrectionModal() {
+            const modal = document.getElementById('correctionModal');
+            if (modal) modal.remove();
+        }
+
+        function submitMealCorrection() {
+            const newName = document.getElementById('corrName').value.trim();
+            
+            if (!newName) {
+                showError('Please enter a meal name');
+                return;
+            }
+            
+            closeMealCorrectionModal();
+            showLoading(true);
+            
+            const userId = localStorage.getItem('user_id');
+            fetch(API_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'search_meal',
+                    userId: userId,
+                    dish_name: newName
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                showLoading(false);
+                if (data.dish_name && data.calories) {
+                    currentAnalysis = data;
+                    displayAnalysis(data);
+                    showSuccess('Meal corrected and analyzed!');
+                } else {
+                    showError('Could not find meal information. Try a different name.');
+                }
+            })
+            .catch(err => {
+                showLoading(false);
+                console.error('Correction error:', err);
+                showError('Error searching for meal');
+            });
         }
 
         // Make Keto version
         function makeKeto() {
-            generateRecipe('keto');
+            generateRecipe('keto', true);
+        }
+
+        // Find Recipe (original version)
+        function findRecipe() {
+            generateRecipe('original', true);
         }
 
         // Generate recipe with dietary modification
-        function generateRecipe(dietType) {
+        function generateRecipe(dietType, autoSave = false) {
             if (!currentAnalysis) return;
 
-            showLoading(true);
+            // Create custom loading message below action buttons
+            const actionButtons = document.querySelector('.action-buttons');
+            let recipeLoading = document.getElementById('recipeLoading');
+            
+            if (!recipeLoading) {
+                recipeLoading = document.createElement('div');
+                recipeLoading.id = 'recipeLoading';
+                recipeLoading.style.cssText = 'margin-top:1rem;padding:1rem;background:var(--bg-subtle);border-radius:8px;text-align:center;';
+                actionButtons.insertAdjacentElement('afterend', recipeLoading);
+            }
+            
+            recipeLoading.innerHTML = `
+                <div style="display:inline-flex;align-items:center;gap:0.75rem;">
+                    <div class="spinner" style="width:20px;height:20px;border-width:2px;"></div>
+                    <span style="color:var(--primary);font-weight:500;">Finding your recipe...</span>
+                </div>
+            `;
+            recipeLoading.style.display = 'block';
+
             const userId = localStorage.getItem('user_id');
+            const recipePrompt = dietType === 'original' 
+                ? `Provide a complete recipe for ${currentAnalysis.dish_name}. Include ingredients with exact quantities and step-by-step instructions. End with nutrition info (calories, protein, carbs, fat).`
+                : `Make this a ${dietType} version. Keep it as close to the original as possible. Include exact quantities and step-by-step instructions. End with the new nutrition info (calories, protein, carbs, fat).`;
 
             fetch(API_ENDPOINT, {
                 method: 'POST',
@@ -1782,22 +1986,234 @@
                 body: JSON.stringify({
                     action: 'get_recipe',
                     dish_name: currentAnalysis.dish_name,
-                    dietary_restriction: `Make this a ${dietType} version. Keep it as close to the original as possible. Include exact quantities and step-by-step instructions. End with the new nutrition info (calories, protein, carbs, fat).`
+                    dietary_restriction: recipePrompt
                 })
             })
             .then(res => res.json())
             .then(data => {
-                showLoading(false);
+                if (recipeLoading) recipeLoading.style.display = 'none';
                 if (data.recipe) {
                     displayRecipe(data.recipe, dietType);
+                    
+                    // Auto-save to recipe history if requested
+                    if (autoSave) {
+                        saveRecipeToHistory(data.recipe, dietType);
+                    }
                 } else {
                     showError(`Failed to generate ${dietType} recipe`);
                 }
             })
             .catch(err => {
-                showLoading(false);
+                if (recipeLoading) recipeLoading.style.display = 'none';
                 console.error('Recipe error:', err);
                 showError('Error generating recipe');
+            });
+        }
+
+        // Save recipe to history
+        function saveRecipeToHistory(recipeText, dietType) {
+            const userId = localStorage.getItem('user_id');
+            
+            if (!userId) {
+                console.error('No userId found');
+                return;
+            }
+            
+            // Title is just the dish name, diet type shown in badge
+            const recipeTitle = currentAnalysis.dish_name;
+            
+            const recipeData = {
+                action: 'save_recipe',
+                userId: userId,
+                title: recipeTitle,
+                type: dietType,
+                dish_name: currentAnalysis.dish_name,
+                content: recipeText,
+                calories: currentAnalysis.calories || 0,
+                protein: currentAnalysis.protein_g || 0,
+                carbs: currentAnalysis.carbs_g || 0,
+                fat: currentAnalysis.fat_g || 0,
+                fiber: currentAnalysis.fiber_g || 0,
+                photo_url: currentAnalysis.photo_url || ''
+            };
+            
+            console.log('Saving recipe:', recipeData);
+            
+            fetch(API_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(recipeData)
+            })
+            .then(res => {
+                console.log('Recipe save response status:', res.status);
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                }
+                return res.json();
+            })
+            .then(data => {
+                console.log('Save recipe response:', data);
+                if (data.recipeId) {
+                    showSuccess('Recipe saved to history!');
+                    loadRecipeHistory();
+                } else {
+                    console.error('Recipe save failed:', data);
+                    showError(data.error || data.message || 'Failed to save recipe');
+                }
+            })
+            .catch(err => {
+                console.error('Recipe save error:', err);
+                showError('Error saving recipe: ' + err.message);
+            });
+        }
+
+        // Load recipe history
+        function loadRecipeHistory() {
+            const userId = localStorage.getItem('user_id');
+            fetch(API_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'get_recipes',
+                    userId: userId
+                })
+            })
+            .then(res => {
+                console.log('Get recipes response status:', res.status);
+                return res.json();
+            })
+            .then(data => {
+                console.log('Loaded recipes:', data);
+                if (data.success === false || data.message) {
+                    console.error('Get recipes error:', data.message || data.error);
+                    showError('Error loading recipes: ' + (data.message || 'Unknown error'));
+                } else if (data.recipes) {
+                    const recipesList = document.getElementById('recipesList');
+                    if (recipesList) {
+                        updateRecipeHistoryDisplay(data.recipes);
+                    }
+                }
+            })
+            .catch(err => {
+                console.error('Load recipes error:', err);
+                showError('Failed to load recipes');
+            });
+        }
+
+        function updateRecipeHistoryDisplay(recipes) {
+            const recipesList = document.getElementById('recipesList');
+            if (!recipesList) {
+                console.error('recipesList element not found');
+                return;
+            }
+            
+            // Store recipes globally
+            window.allRecipes = recipes;
+            
+            if (recipes.length === 0) {
+                recipesList.innerHTML = '<div class="empty-state"><p>No recipes saved yet. Generate a recipe to get started!</p></div>';
+                return;
+            }
+            
+            recipesList.innerHTML = recipes.map(recipe => {
+                const capitalizedType = recipe.type ? recipe.type.charAt(0).toUpperCase() + recipe.type.slice(1) : 'Recipe';
+                return `
+                <div class="meal-card" onclick="viewRecipeDetail('${recipe.recipeId}')" style="cursor:pointer;">
+                    <div style="display: inline-block; background: rgba(8, 145, 178, 0.1); color: var(--primary); padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem; margin-bottom: 0.5rem;">${capitalizedType}</div>
+                    <h4>${recipe.title}</h4>
+                    <div class="meal-time">${new Date(recipe.timestamp).toLocaleDateString()}</div>
+                    <div class="meal-stats">
+                        <div class="meal-stat"><strong>${recipe.calories}</strong> cal</div>
+                        <div class="meal-stat"><strong>${recipe.protein}g</strong> protein</div>
+                        <div class="meal-stat"><strong>${recipe.carbs}g</strong> carbs</div>
+                        <div class="meal-stat"><strong>${recipe.fat}g</strong> fat</div>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                        <button class="btn btn-primary" style="flex: 1; padding: 0.5rem; font-size: 0.85rem;" onclick="event.stopPropagation(); viewRecipeDetail('${recipe.recipeId}')">View Recipe</button>
+                        <button class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem;" onclick="event.stopPropagation(); deleteRecipe('${recipe.recipeId}')">Delete</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function viewRecipeDetail(recipeId) {
+            const recipe = window.allRecipes.find(r => r.recipeId === recipeId);
+            if (!recipe) return;
+            
+            const capitalizedType = recipe.type ? recipe.type.charAt(0).toUpperCase() + recipe.type.slice(1) : 'Recipe';
+            
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:2000;display:flex;align-items:center;justify-content:center;padding:1rem;';
+            modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
+            
+            const content = document.createElement('div');
+            content.style.cssText = 'background:white;padding:2rem;border-radius:12px;max-width:700px;width:100%;max-height:90vh;overflow-y:auto;';
+            
+            content.innerHTML = `
+                <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:1rem;">
+                    <div>
+                        <h2 style="margin:0 0 0.5rem 0;">${recipe.title}</h2>
+                        <span style="display:inline-block;background:rgba(8,145,178,0.1);color:var(--primary);padding:0.25rem 0.75rem;border-radius:12px;font-size:0.875rem;">${capitalizedType}</span>
+                    </div>
+                    <button onclick="this.closest('[style*=fixed]').remove()" style="background:none;border:none;font-size:2rem;cursor:pointer;color:var(--text-muted);line-height:1;">×</button>
+                </div>
+                ${recipe.photo_url ? `<img src="${recipe.photo_url}" style="width:100%;border-radius:8px;margin-bottom:1.5rem;">` : ''}
+                <div style="background:var(--bg-subtle);padding:1rem;border-radius:8px;margin-bottom:1.5rem;">
+                    <h3 style="margin:0 0 0.5rem 0;">Nutrition Facts</h3>
+                    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.75rem;">
+                        <div><strong>Calories:</strong> ${recipe.calories}</div>
+                        <div><strong>Protein:</strong> ${recipe.protein}g</div>
+                        <div><strong>Carbs:</strong> ${recipe.carbs}g</div>
+                        <div><strong>Fat:</strong> ${recipe.fat}g</div>
+                        <div><strong>Fiber:</strong> ${recipe.fiber || 0}g</div>
+                    </div>
+                </div>
+                <div style="background:white;border:1px solid var(--border);padding:1.5rem;border-radius:8px;">
+                    <h3 style="margin:0 0 1rem 0;">Recipe Instructions</h3>
+                    <div style="white-space:pre-wrap;line-height:1.8;">${recipe.content || 'No recipe content available'}</div>
+                </div>
+                <div style="color:var(--text-muted);font-size:0.875rem;margin-top:1rem;">
+                    Saved on ${new Date(recipe.timestamp).toLocaleString()}
+                </div>
+            `;
+            
+            modal.appendChild(content);
+            document.body.appendChild(modal);
+        }
+
+        function deleteRecipe(recipeId) {
+            if (!confirm('Delete this recipe?')) return;
+            
+            // Remove from UI immediately
+            window.allRecipes = window.allRecipes.filter(r => r.recipeId !== recipeId);
+            updateRecipeHistoryDisplay(window.allRecipes);
+            
+            const userId = localStorage.getItem('user_id');
+            showLoading(true);
+            
+            fetch(API_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'delete_recipe',
+                    userId: userId,
+                    recipeId: recipeId
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                showLoading(false);
+                if (data.success) {
+                    showSuccess('Recipe deleted!');
+                } else {
+                    showError('Failed to delete recipe');
+                    loadRecipeHistory(); // Reload if failed
+                }
+            })
+            .catch(err => {
+                showLoading(false);
+                showError('Error deleting recipe');
+                loadRecipeHistory(); // Reload if error
             });
         }
 
@@ -1834,34 +2250,25 @@
         }
 
         // Save recipe
-        function saveRecipe() {
-            if (!currentAnalysis) return;
-
-            const recipeTitle = document.getElementById('recipeTitle').textContent;
-            const recipeContent = document.getElementById('recipeContent').innerText;
-            const dietType = recipeTitle.includes('Vegan') ? 'Vegan' : recipeTitle.includes('Keto') ? 'Keto' : 'Original';
-
-            const recipe = {
-                id: Date.now(),
-                title: recipeTitle,
-                type: dietType,
-                dish: currentAnalysis.dish_name,
-                content: recipeContent,
-                calories: currentAnalysis.calories,
-                protein: currentAnalysis.protein_g,
-                carbs: currentAnalysis.carbs_g,
-                fat: currentAnalysis.fat_g,
-                savedAt: new Date().toLocaleDateString()
-            };
-
-            savedRecipes.push(recipe);
-            updateRecipeHistory();
-            alert('Recipe saved!');
-        }
 
         // Close recipe
         function closeRecipe() {
             document.getElementById('recipeSection').style.display = 'none';
+        }
+
+        function analyzeAnother() {
+            document.getElementById('analysisSection').classList.remove('show');
+            document.getElementById('imagePreview').style.display = 'none';
+            document.getElementById('recipeSection').style.display = 'none';
+            document.getElementById('chatSection').style.display = 'none';
+            document.getElementById('photoUpload').value = '';
+        }
+
+        function saveRecipe() {
+            const recipeContent = document.getElementById('recipeContent').textContent;
+            const recipeTitle = document.getElementById('recipeTitle').textContent;
+            const dietType = recipeTitle.includes('Vegan') ? 'vegan' : recipeTitle.includes('Keto') ? 'keto' : recipeTitle.includes('Healthy') ? 'healthy' : 'original';
+            saveRecipeToHistory(recipeContent, dietType);
         }
 
         // AI Chat functions
@@ -1892,6 +2299,9 @@
 
             document.getElementById('analysisImage').src = document.getElementById('previewImage').src;
             document.getElementById('analysisSection').classList.add('show');
+            
+            // Hide preview section after analysis is shown
+            document.getElementById('imagePreview').style.display = 'none';
             
             // Show chat section only after successful analysis
             document.getElementById('chatSection').style.display = 'block';
@@ -1990,6 +2400,14 @@
             document.getElementById('errorMessage').classList.remove('show');
         }
 
+        function showSuccess(message) {
+            const div = document.createElement('div');
+            div.style.cssText = 'position:fixed;top:80px;right:20px;background:#10b981;color:white;padding:1rem 1.5rem;border-radius:8px;z-index:3000;box-shadow:0 4px 12px rgba(0,0,0,0.15);font-weight:500;';
+            div.textContent = message;
+            document.body.appendChild(div);
+            setTimeout(() => div.remove(), 3000);
+        }
+
         // Meal Planner
         let dailyMeals = {
             breakfast: [],
@@ -2025,9 +2443,9 @@
                 `;
             } else {
                 mealsList.innerHTML = allSavedMeals.map(meal => `
-                    <button style="text-align: left; padding: 1rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-subtle); cursor: pointer; transition: all 0.3s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'" onclick="quickAddMealToPlanner('${meal.name}', ${meal.calories}, ${meal.protein}, ${meal.carbs}, ${meal.fat}, ${meal.fiber}, '${mealType}')">
-                        <strong>${meal.name}</strong><br>
-                        <span style="font-size: 0.85rem; color: var(--text-muted);">${meal.calories} cal | ${meal.protein}g P | ${meal.carbs}g C | ${meal.fat}g F</span>
+                    <button style="text-align: left; padding: 1rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-subtle); cursor: pointer; transition: all 0.3s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'" onclick="quickAddMealToPlanner('${meal.dish_name}', ${meal.calories}, ${meal.protein_g || 0}, ${meal.carbs_g || 0}, ${meal.fat_g || 0}, ${meal.fiber_g || 0}, '${mealType}')">
+                        <strong>${meal.dish_name}</strong><br>
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">${meal.calories} cal | ${meal.protein_g || 0}g P | ${meal.carbs_g || 0}g C | ${meal.fat_g || 0}g F</span>
                     </button>
                 `).join('') + `
                     <button class="btn btn-primary" onclick="openManualMealModal('${mealType}')" style="width: 100%;">+ Type a Custom Meal</button>
@@ -2216,6 +2634,34 @@
 
             const fiberPercentage = Math.min((totals.fiber / fiberGoal) * 100, 100);
             document.getElementById('fiberProgress').style.width = `${fiberPercentage}%`;
+            
+            // Auto-save to database
+            saveDailyPlan();
+        }
+        
+        function saveDailyPlan() {
+            const dateInput = document.getElementById('planDate').value;
+            if (!dateInput) return;
+            
+            const userId = localStorage.getItem('user_id');
+            
+            fetch(API_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'save_plan',
+                    userId: userId,
+                    date: dateInput,
+                    meals: dailyMeals
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log('Plan auto-saved');
+            })
+            .catch(err => {
+                console.error('Error saving plan:', err);
+            });
         }
 
         function toggleGoalEdit() {
@@ -2251,44 +2697,33 @@
             }
         }
 
-        function updateRecipeHistory() {
-            const container = document.getElementById('recipesList');
-            if (savedRecipes.length === 0) {
-                container.innerHTML = '<div class="empty-state"><p>No recipes saved yet. Generate a vegan or keto recipe to get started!</p></div>';
-                return;
-            }
+//         function updateRecipeHistory() {
+//             const container = document.getElementById('recipesList');
+//             if (savedRecipes.length === 0) {
+//                 container.innerHTML = '<div class="empty-state"><p>No recipes saved yet. Generate a vegan or keto recipe to get started!</p></div>';
+//                 return;
+//             }
+// 
+//             container.innerHTML = savedRecipes.map(recipe => `
+//                 <div class="meal-card">
+//                     <div style="display: inline-block; background: rgba(8, 145, 178, 0.1); color: var(--primary); padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem; margin-bottom: 0.5rem;">${recipe.type}</div>
+//                     <h4>${recipe.title}</h4>
+//                     <div class="meal-time">Saved: ${recipe.savedAt}</div>
+//                     <div class="meal-stats">
+//                         <div class="meal-stat"><strong>${recipe.calories}</strong> cal</div>
+//                         <div class="meal-stat"><strong>${recipe.protein}g</strong> protein</div>
+//                         <div class="meal-stat"><strong>${recipe.carbs}g</strong> carbs</div>
+//                         <div class="meal-stat"><strong>${recipe.fat}g</strong> fat</div>
+//                     </div>
+//                     <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+//                         <button class="btn btn-primary" style="flex: 1; padding: 0.5rem; font-size: 0.85rem;" onclick="quickAddMealToPlanner('${recipe.title}', ${recipe.calories}, ${recipe.protein}, ${recipe.carbs}, ${recipe.fat}, 0)">+ Add to Today</button>
+//                         <button class="btn btn-secondary" style="flex: 1; padding: 0.5rem; font-size: 0.85rem;" onclick="viewRecipe(${recipe.id})">View</button>
+//                         <button class="btn btn-secondary" style="flex: 1; padding: 0.5rem; font-size: 0.85rem;" onclick="deleteRecipe(${recipe.id})">Delete</button>
+//                     </div>
+//                 </div>
+//             `).join('');
+//         }
 
-            container.innerHTML = savedRecipes.map(recipe => `
-                <div class="meal-card">
-                    <div style="display: inline-block; background: rgba(8, 145, 178, 0.1); color: var(--primary); padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem; margin-bottom: 0.5rem;">${recipe.type}</div>
-                    <h4>${recipe.title}</h4>
-                    <div class="meal-time">Saved: ${recipe.savedAt}</div>
-                    <div class="meal-stats">
-                        <div class="meal-stat"><strong>${recipe.calories}</strong> cal</div>
-                        <div class="meal-stat"><strong>${recipe.protein}g</strong> protein</div>
-                        <div class="meal-stat"><strong>${recipe.carbs}g</strong> carbs</div>
-                        <div class="meal-stat"><strong>${recipe.fat}g</strong> fat</div>
-                    </div>
-                    <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-                        <button class="btn btn-primary" style="flex: 1; padding: 0.5rem; font-size: 0.85rem;" onclick="quickAddMealToPlanner('${recipe.title}', ${recipe.calories}, ${recipe.protein}, ${recipe.carbs}, ${recipe.fat}, 0)">+ Add to Today</button>
-                        <button class="btn btn-secondary" style="flex: 1; padding: 0.5rem; font-size: 0.85rem;" onclick="viewRecipe(${recipe.id})">View</button>
-                        <button class="btn btn-secondary" style="flex: 1; padding: 0.5rem; font-size: 0.85rem;" onclick="deleteRecipe(${recipe.id})">Delete</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function viewRecipe(recipeId) {
-            const recipe = savedRecipes.find(r => r.id === recipeId);
-            if (recipe) {
-                alert(`${recipe.title}\n\n${recipe.content}`);
-            }
-        }
-
-        function deleteRecipe(recipeId) {
-            savedRecipes = savedRecipes.filter(r => r.id !== recipeId);
-            updateRecipeHistory();
-        }
 
         function logout() {
             localStorage.removeItem('user_id');
@@ -2546,17 +2981,18 @@
             .then(res => res.json())
             .then(data => {
                 console.log('Plan response:', data);
-                if (data.userId && data.date) {
-                    displayPlanForDate(data);
-                    alert(`Loaded plan for ${dateInput}`);
+                if (data.userId && data.date && data.meals) {
+                    // Load the plan into the planner
+                    dailyMeals = data.meals;
+                    updateMealPlanner();
+                    showSuccess(`Loaded plan for ${dateInput}`);
                 } else {
-                    console.error('Invalid response:', data);
-                    alert('Failed to load plan');
+                    console.log('No saved plan for this date, starting fresh');
                 }
             })
             .catch(err => {
                 console.error('Error:', err);
-                alert('Error loading plan');
+                showError('Error loading plan');
             });
         }
 
