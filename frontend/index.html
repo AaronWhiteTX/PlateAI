@@ -557,7 +557,6 @@
                 <p>Snap a photo. Understand your nutrition. Take control of your diet with AI-powered food analysis.</p>
                 <div class="cta-group">
                     <button class="btn btn-primary" onclick="openSignUp()" style="font-size: 1rem; padding: 0.8rem 2rem;">Start for Free</button>
-                    <button class="btn btn-secondary" style="font-size: 1rem; padding: 0.8rem 2rem;">Learn More</button>
                 </div>
             </div>
         </div>
@@ -818,6 +817,7 @@
                     // Store user info
                     localStorage.setItem('user_id', data.user_id);
                     localStorage.setItem('email', data.email);
+                    localStorage.setItem('authMethod', 'google');
                     closeModal('signInModal');
                     closeModal('signUpModal');
                     // Update nav and show dashboard
@@ -892,6 +892,7 @@
                 if (data.success) {
                     localStorage.setItem('user_id', data.user_id);
                     localStorage.setItem('email', email);
+                    localStorage.setItem('authMethod', 'email');
                     closeModal('signUpModal');
                     updateNavForLoggedIn(email);
                     document.querySelector('.hero').style.display = 'none';
@@ -930,6 +931,7 @@
                 if (data.success) {
                     localStorage.setItem('user_id', data.user_id);
                     localStorage.setItem('email', email);
+                    localStorage.setItem('authMethod', 'email');
                     closeModal('signInModal');
                     updateNavForLoggedIn(email);
                     document.querySelector('.hero').style.display = 'none';
