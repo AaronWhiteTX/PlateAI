@@ -1613,6 +1613,12 @@
         function handlePhotoUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
+            
+            // Check rate limit
+            if (!checkRateLimit('photoUploads')) {
+                event.target.value = ''; // Reset file input
+                return;
+            }
 
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -1623,6 +1629,7 @@
                 // Convert to base64 for API
                 const base64 = imageData.split(',')[1];
                 analyzeMeal(base64);
+                incrementRateLimit('photoUploads'); // Increment after successful start
             };
             reader.readAsDataURL(file);
         }
@@ -1955,6 +1962,11 @@
         // Generate recipe with dietary modification
         function generateRecipe(dietType, autoSave = false) {
             if (!currentAnalysis) return;
+            
+            // Check rate limit
+            if (!checkRateLimit('recipeGenerations')) {
+                return;
+            }
 
             // Create custom loading message below action buttons
             const actionButtons = document.querySelector('.action-buttons');
@@ -1974,6 +1986,7 @@
                 </div>
             `;
             recipeLoading.style.display = 'block';
+            incrementRateLimit('recipeGenerations'); // Increment after check passes
 
             const userId = localStorage.getItem('user_id');
             const recipePrompt = dietType === 'original' 
@@ -2273,6 +2286,48 @@
 
         // AI Chat functions
         let chatHistory = [];
+        
+        // Daily rate limits (reset at midnight)
+        const DAILY_LIMITS = {
+            photoUploads: 2,
+            aiQuestions: 3,
+            recipeGenerations: 3
+        };
+        
+        function getTodayKey() {
+            return new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+        }
+        
+        function getRateLimitData() {
+            const today = getTodayKey();
+            const stored = localStorage.getItem('rateLimits');
+            const data = stored ? JSON.parse(stored) : {};
+            
+            // Reset if it's a new day
+            if (data.date !== today) {
+                return { date: today, photoUploads: 0, aiQuestions: 0, recipeGenerations: 0 };
+            }
+            return data;
+        }
+        
+        function saveRateLimitData(data) {
+            localStorage.setItem('rateLimits', JSON.stringify(data));
+        }
+        
+        function checkRateLimit(type) {
+            const data = getRateLimitData();
+            if (data[type] >= DAILY_LIMITS[type]) {
+                showError(`Daily limit reached (${DAILY_LIMITS[type]} ${type} per day). This is a demo - limits keep costs low.`);
+                return false;
+            }
+            return true;
+        }
+        
+        function incrementRateLimit(type) {
+            const data = getRateLimitData();
+            data[type]++;
+            saveRateLimitData(data);
+        }
 
         function displayAnalysis(data) {
             document.getElementById('dishName').textContent = data.dish_name;
@@ -2849,10 +2904,17 @@
             const input = document.getElementById('coachInput');
             const message = input.value.trim();
             if (!message) return;
+            
+            // Check rate limit
+            if (!checkRateLimit('aiQuestions')) {
+                input.value = '';
+                return;
+            }
 
             // Add user message
             addCoachMessage(message, 'user');
             input.value = '';
+            incrementRateLimit('aiQuestions'); // Increment after check passes
 
             // Show thinking message
             const messagesDiv = document.getElementById('coachMessages');
