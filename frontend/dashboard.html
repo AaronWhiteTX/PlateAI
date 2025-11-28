@@ -156,6 +156,53 @@
             transform: scale(1.1);
         }
 
+        /* Mobile AI Coach indicator - always visible */
+        @media (max-width: 768px) {
+            .menu-btn {
+                position: relative;
+            }
+
+            .menu-btn::before {
+                content: "AI Coach";
+                position: absolute;
+                bottom: -30px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: var(--primary);
+                color: white;
+                padding: 0.4rem 0.6rem;
+                border-radius: 4px;
+                font-size: 0.7rem;
+                font-weight: 600;
+                white-space: nowrap;
+                pointer-events: none;
+                animation: fadeInDown 0.5s ease 0.5s both;
+            }
+
+            .menu-btn::after {
+                content: "↑";
+                position: absolute;
+                bottom: -12px;
+                left: 50%;
+                transform: translateX(-50%);
+                color: var(--primary);
+                font-size: 1.2rem;
+                pointer-events: none;
+                animation: fadeInDown 0.5s ease 0.5s both;
+            }
+
+            @keyframes fadeInDown {
+                from {
+                    opacity: 0;
+                    transform: translateX(-50%) translateY(-10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(-50%) translateY(0);
+                }
+            }
+        }
+
         /* Mobile Menu Dropdown */
         .mobile-menu {
             display: none;
@@ -755,6 +802,52 @@
             padding: 0.75rem 1.5rem;
         }
 
+        @media (max-width: 768px) {
+            #aiCoachModal .manual-meal-content {
+                max-height: 90vh;
+                display: flex;
+                flex-direction: column;
+                padding: 1.5rem 1rem;
+            }
+
+            #aiCoachModal .manual-meal-header {
+                order: 1;
+                margin-bottom: 1rem;
+            }
+
+            #aiCoachModal .manual-meal-header h3 {
+                font-size: 1.2rem;
+            }
+
+            #aiCoachModal .manual-meal-close {
+                padding: 0.5rem;
+                font-size: 1.5rem;
+            }
+
+            #aiCoachModal #coachMessages {
+                order: 2;
+                flex: 1;
+                height: auto;
+                min-height: 200px;
+                margin-bottom: 1rem;
+            }
+
+            #aiCoachModal .chat-input-group {
+                order: 3;
+                gap: 0.5rem;
+            }
+
+            #aiCoachModal .chat-input-group input {
+                padding: 0.6rem;
+                font-size: 0.9rem;
+            }
+
+            #aiCoachModal .chat-input-group button {
+                padding: 0.6rem 1rem;
+                font-size: 0.85rem;
+            }
+        }
+
         /* Daily Meal Planner */
         .planner-section {
             background: var(--bg);
@@ -1065,6 +1158,19 @@
             .summary-stats {
                 grid-template-columns: repeat(2, 1fr);
             }
+
+            .meals-section h3 {
+                text-align: center;
+            }
+
+            #planDate {
+                flex: 1;
+                min-width: 150px;
+            }
+
+            div[style*="margin-bottom: 1.5rem; display: flex"] {
+                justify-content: center;
+            }
         }
     </style>
 </head>
@@ -1097,11 +1203,11 @@
             <p>Take a photo of your meal and get instant nutritional analysis</p>
             
             <div class="upload-buttons">
-                <button class="btn btn-primary" onclick="document.getElementById('photoInput').click()">
-                    📷 Take Photo
-                </button>
-                <button class="btn btn-secondary" onclick="openCamera()">
+                <button class="btn btn-primary" onclick="openCamera()">
                     🎥 Use Camera
+                </button>
+                <button class="btn btn-secondary" onclick="openPhotoLibrary()">
+                    🖼️ Photo Library
                 </button>
             </div>
 
@@ -1192,6 +1298,13 @@
         <!-- Daily Meal Planner -->
         <div class="planner-section">
             <h3>📅 Daily Meal Planner</h3>
+            
+            <div style="margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                <label style="font-weight: 600;">Select Date:</label>
+                <input type="date" id="planDate" style="padding: 0.5rem; border: 1px solid var(--border); border-radius: 6px;">
+                <button class="btn btn-primary" onclick="loadPlanForDate()" style="padding: 0.65rem 1.5rem;">Load</button>
+                <button class="btn btn-secondary" onclick="loadTodayPlan()" style="padding: 0.65rem 1.5rem;">Today</button>
+            </div>
             
             <div class="daily-summary">
                 <div class="summary-title">
@@ -1856,6 +1969,12 @@
             input.click();
         }
 
+        function openPhotoLibrary() {
+            const input = document.getElementById('photoInput');
+            input.removeAttribute('capture');
+            input.click();
+        }
+
         // Helper functions
         function showLoading(show) {
             document.getElementById('loading').classList.toggle('show', show);
@@ -2405,8 +2524,79 @@
             });
         }
 
+        // Date picker functions
+        function loadPlanForDate() {
+            const dateInput = document.getElementById('planDate').value;
+            if (!dateInput) {
+                alert('Please select a date');
+                return;
+            }
+            
+            const userId = localStorage.getItem('user_id');
+            
+            fetch(API_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'get_plan',
+                    userId: userId,
+                    date: dateInput
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log('Plan response:', data);
+                if (data.userId && data.date) {
+                    displayPlanForDate(data);
+                    alert(`Loaded plan for ${dateInput}`);
+                } else {
+                    console.error('Invalid response:', data);
+                    alert('Failed to load plan');
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('Error loading plan');
+            });
+        }
+
+        function loadTodayPlan() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const localDate = `${year}-${month}-${day}`;
+            
+            document.getElementById('planDate').value = localDate;
+            loadPlanForDate();
+        }
+
+        function displayPlanForDate(plan) {
+            console.log('Loaded plan:', plan);
+            
+            dailyMeals = {
+                breakfast: [],
+                lunch: [],
+                dinner: [],
+                snacks: []
+            };
+            
+            // Plan loaded successfully - just update planner
+            // User can now add meals to this date
+            updateMealPlanner();
+        }
+
         // Initialize
-        window.addEventListener('load', checkAuth);
+        window.addEventListener('load', function() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const localDate = `${year}-${month}-${day}`;
+            
+            document.getElementById('planDate').value = localDate;
+            checkAuth();
+        });
     </script>
 </body>
 </html>
