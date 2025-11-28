@@ -1,15 +1,49 @@
 import json
 import boto3
 import base64
-from datetime import datetime
+from datetime import datetime, timedelta
 import uuid
 import hashlib
 import urllib.request
 import urllib.parse
+import re
 
 dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
 s3_client = boto3.client('s3', region_name='us-east-1')
 bedrock = boto3.client('bedrock-runtime', region_name='us-east-1')
+cloudwatch = boto3.client('cloudwatch', region_name='us-east-1')
+
+def validate_email(email):
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return re.match(pattern, email) is not None
+
+def validate_image_base64(image_base64, max_size_mb=10):
+    if not image_base64:
+        return False, "No image provided"
+    size_bytes = len(image_base64) * 0.75
+    size_mb = size_bytes / (1024 * 1024)
+    if size_mb > max_size_mb:
+        return False, f"Image too large: {size_mb:.1f}MB (max {max_size_mb}MB)"
+    return True, None
+
+def validate_question(question, max_length=500):
+    if not question or len(question) > max_length:
+        return False, f"Question must be 1-{max_length} characters"
+    return True, None
+
+def put_metric(metric_name, value, unit='Count'):
+    try:
+        cloudwatch.put_metric_data(
+            Namespace='FoodIdentifier',
+            MetricData=[{
+                'MetricName': metric_name,
+                'Value': value,
+                'Unit': unit,
+                'Timestamp': datetime.utcnow()
+            }]
+        )
+    except Exception as e:
+        print(f"Failed to put metric: {str(e)}")
 
 table = dynamodb.Table('meals')
 users_table = dynamodb.Table('users')
@@ -118,7 +152,8 @@ def create_user(body):
         if len(password) < 6:
             return error_response(400, 'Password must be at least 6 characters')
         
-        if '@' not in email:
+        if not validate_email(email):
+            put_metric('ValidationError', 1)
             return error_response(400, 'Invalid email format')
         
         # Hash password
@@ -144,6 +179,7 @@ def create_user(body):
         }
         users_table.put_item(Item=user_data)
         
+        put_metric('UserCreated', 1)
         return success_response({
             'success': True,
             'user_id': user_id,
@@ -188,6 +224,7 @@ def verify_user(body):
             ExpressionAttributeValues={':now': datetime.utcnow().isoformat()}
         )
         
+        put_metric('UserLogin', 1)
         return success_response({
             'success': True,
             'user_id': user_id,
@@ -203,8 +240,10 @@ def analyze_food_photo(body):
         image_base64 = body.get('image_base64')
         user_id = body.get('userId', 'anonymous')
         
-        if not image_base64:
-            return error_response(400, 'No image provided')
+        is_valid, error_msg = validate_image_base64(image_base64, max_size_mb=10)
+        if not is_valid:
+            put_metric('ValidationError', 1)
+            return error_response(400, error_msg)
         
         req_body = json.dumps({
             'anthropic_version': 'bedrock-2023-05-31',
@@ -251,6 +290,9 @@ def analyze_food_photo(body):
         analysis_text = result['content'][0]['text']
         analysis = json.loads(analysis_text)
         
+        put_metric('PhotoAnalyzed', 1)
+        put_metric('BedrockTokensUsed', result.get('usage', {}).get('output_tokens', 0))
+        
         return success_response(analysis)
     except Exception as e:
         return error_response(500, str(e))
@@ -286,37 +328,88 @@ def ask_ai(body):
     print(f"DEBUG: ask_ai called with question: {body.get('question')}")
     try:
         question = body.get('question', '')
+        user_id = body.get('userId', 'anonymous')
         nutrition = body.get('nutrition', {})
         goals = body.get('goals', {})
         context = body.get('context', '')
         dish_name = body.get('dish_name', '')
         
-        if not question:
-            return error_response(400, 'No question provided')
+        is_valid, error_msg = validate_question(question, max_length=500)
+        if not is_valid:
+            put_metric('ValidationError', 1)
+            return error_response(400, error_msg)
         
-        # Build prompt based on what context is available
+        system_prompt = """You are a casual friend, not an AI.
+Respond VERY SHORT:
+- Greeting: 1 sentence max. Just say hi back.
+- Short question: 1-2 sentences, direct answer
+- Medium question: 2-3 sentences max
+- Long question: 3-4 sentences max
+Never suggest features, tracking, or goals. No lists or bullets. Sound human."""
+        
+        is_greeting = question.lower() in ['hello', 'hi', 'hey', 'what\'s up', 'sup', 'yo', 'nice', 'good', 'thanks', 'cool', 'lol', 'ok', 'kk']
+        is_short = len(question) < 20
+        is_medium = len(question) < 50
+        
+        if is_greeting:
+            max_tokens = 40
+        elif is_short:
+            max_tokens = 80
+        elif is_medium:
+            max_tokens = 150
+        else:
+            max_tokens = 250
+        
+        # Get conversation history
+        conversation_history = []
+        try:
+            response = dynamodb.Table('conversations').query(
+                KeyConditionExpression='userId = :uid',
+                ExpressionAttributeValues={':uid': user_id},
+                ScanIndexForward=True,  # oldest first (chronological)
+                Limit=20  # last 20 messages
+            )
+            conversation_history = response.get('Items', [])
+        except Exception as e:
+            print(f"DEBUG: Could not fetch conversation history: {str(e)}")
+        
+        # Build messages array with history
+        messages = []
+        
+        # Add previous conversation
+        for msg in conversation_history:
+            if msg.get('role') == 'user':
+                messages.append({'role': 'user', 'content': msg.get('content', '')})
+            elif msg.get('role') == 'assistant':
+                messages.append({'role': 'assistant', 'content': msg.get('content', '')})
+        
+        # Build current prompt based on context
         if nutrition and goals:
             # AI Coach mode - nutrition focused
             nutrition_info = f"Current nutrition: Calories: {nutrition.get('calories', 0)}, Protein: {nutrition.get('protein', 0)}g, Carbs: {nutrition.get('carbs', 0)}g, Fat: {nutrition.get('fat', 0)}g, Fiber: {nutrition.get('fiber', 0)}g"
             goals_info = f"Daily goals: Calories: {goals.get('calories', 2000)}, Protein: {goals.get('protein', 50)}g, Carbs: {goals.get('carbs', 250)}g, Fiber: {goals.get('fiber', 25)}g"
-            prompt = f"You are a helpful nutrition and health coach. {context}\n\n{nutrition_info}\n{goals_info}\n\nUser question: {question}\n\nProvide helpful, personalized nutrition and health advice."
+            prompt = f"{nutrition_info}\n{goals_info}\n\nUser question: {question}\n\nProvide helpful, personalized nutrition advice."
         elif dish_name:
             # Meal analysis mode
             nutrition_info = f"Nutrition info - Calories: {nutrition.get('calories', 0)}, Protein: {nutrition.get('protein', 0)}g, Carbs: {nutrition.get('carbs', 0)}g, Fat: {nutrition.get('fat', 0)}g"
             prompt = f"The user is asking about a meal: {dish_name}. {nutrition_info}. Their question: {question}. Provide a helpful, concise answer."
         else:
             # General question
-            prompt = f"You are a helpful nutrition and health coach. Answer this question: {question}"
+            prompt = question
         
-        print(f"DEBUG: Built prompt: {prompt[:100]}...")
+        # Add current message
+        messages.append({'role': 'user', 'content': prompt})
+        
+        print(f"DEBUG: Built prompt with {len(messages)} total messages (including history)...")
         
         req_body = json.dumps({
             'anthropic_version': 'bedrock-2023-05-31',
-            'max_tokens': 500,
-            'messages': [{'role': 'user', 'content': prompt}]
+            'max_tokens': max_tokens,
+            'system': system_prompt,
+            'messages': messages
         })
         
-        print(f"DEBUG: Calling bedrock...")
+        print(f"DEBUG: Calling bedrock with max_tokens={max_tokens}...")
         response = bedrock.invoke_model(
             modelId='us.anthropic.claude-3-5-sonnet-20240620-v1:0',
             body=req_body,
@@ -326,6 +419,36 @@ def ask_ai(body):
         
         result = json.loads(response['body'].read().decode())
         ai_response = result['content'][0]['text']
+        
+        put_metric('AICoachQuery', 1)
+        put_metric('BedrockTokensUsed', result.get('usage', {}).get('output_tokens', 0))
+        
+        # Save conversation to history
+        try:
+            conversations_table = dynamodb.Table('conversations')
+            timestamp_user = datetime.utcnow().isoformat()
+            timestamp_assistant = (datetime.utcnow().timestamp() + 0.001)
+            expiry_time = int((datetime.utcnow() + timedelta(days=90)).timestamp())
+            
+            # Save user message
+            conversations_table.put_item(Item={
+                'userId': user_id,
+                'timestamp': timestamp_user,
+                'role': 'user',
+                'content': question,
+                'expiryTime': expiry_time
+            })
+            
+            # Save assistant response
+            conversations_table.put_item(Item={
+                'userId': user_id,
+                'timestamp': datetime.fromtimestamp(timestamp_assistant).isoformat(),
+                'role': 'assistant',
+                'content': ai_response,
+                'expiryTime': expiry_time
+            })
+        except Exception as e:
+            print(f"DEBUG: Could not save conversation history: {str(e)}")
         
         print(f"DEBUG: Got AI response: {ai_response[:100]}...")
         return success_response({'response': ai_response})
