@@ -7,7 +7,6 @@ A production-grade serverless web application that uses AWS Bedrock (Claude AI) 
 ---
 
 ## System Architecture
-
 ```mermaid
 graph TB
     subgraph Frontend
@@ -70,6 +69,24 @@ PlateAI solves the problem of manual food logging and meal planning by leveragin
 - **Monthly Cost**: ~$1-3 (optimized via strict rate limiting)
 - **Latency**: <2 seconds for most requests
 - **Rate Limits**: 2 photos, 3 AI questions, 3 recipes per day (implemented for cost protection)
+
+---
+
+## Infrastructure as Code
+
+The **entire live production stack** (26 AWS resources) is fully managed with Terraform:
+- Lambda function, 5 DynamoDB tables, 2 S3 buckets, API Gateway, CloudFront, IAM roles, ACM certificate
+- Imported from running production app (zero downtime, zero changes applied)
+- Automated deployment script for one-command infrastructure provisioning
+- Complete teardown capability for cost control
+
+**Terraform Repository:** [plateai-terraform](https://github.com/AaronWhiteTX/Plateai-terraform)
+
+This demonstrates:
+- Infrastructure as Code best practices
+- Ability to import and manage existing production environments
+- Separation of application code from infrastructure definitions
+- Reproducible deployment workflows
 
 ---
 
@@ -181,18 +198,35 @@ The application exposes a RESTful API via AWS API Gateway.
 
 ---
 
+## Deployment
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for complete instructions on deploying PlateAI to your own AWS account.
+
+Quick overview:
+1. Enable Bedrock Claude access in AWS
+2. Clone repositories (app + Terraform)
+3. Configure bucket names and optional custom domain
+4. Deploy infrastructure: `terraform apply`
+5. Upload frontend files to S3
+
+Full teardown: `terraform destroy` (complete cleanup, zero residual cost)
+
+---
+
 ## Portfolio Competencies
 
 This project demonstrates the following engineering capabilities:
 
 - **Cloud-Native Development**: Multi-service integration (Lambda, Bedrock, DynamoDB, S3, API Gateway).
+- **Infrastructure as Code**: Complete production environment managed via Terraform with automated deployment.
 - **FinOps & Cost Awareness**: Engineering architectural decisions specifically to control cloud spend (rate limits, resource selection).
 - **Production Readiness**: Implementation of error handling, input validation, and TTL data cleanup.
 - **AI Integration**: Applied usage of Vision and LLM models in a practical, user-facing context.
 - **Full Stack Implementation**: Complete development from backend Python logic to frontend integration.
+- **DevOps Practices**: Separation of infrastructure and application code, reproducible deployments, automated teardown.
 
 ---
 
-**Last Updated**: November 28, 2024  
+**Last Updated**: November 30, 2025 
 **Status**: Production-Ready  
 **Monthly Cost**: $1-3 (with rate limits)
