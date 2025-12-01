@@ -188,5 +188,4 @@ Full deployment guide: [DEPLOYMENT.md](DEPLOYMENT.md)
 
 ---
 
-**Built with AWS | Managed with Terraform*
-```
+**Built with AWS | Managed with Terraform**
