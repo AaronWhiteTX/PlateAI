@@ -6,12 +6,7 @@
     <title>PlateAI - Intelligent Food Intelligence</title>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
             --primary: #0891b2;
             --primary-dark: #0e7490;
@@ -22,11 +17,7 @@
             --text-muted: #64748b;
             --border: #e2e8f0;
         }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
+        html { scroll-behavior: smooth; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
             background: var(--bg);
@@ -45,7 +36,6 @@
             z-index: 1000;
             padding: 1rem 2rem;
         }
-
         .nav-container {
             max-width: 1400px;
             margin: 0 auto;
@@ -53,7 +43,6 @@
             justify-content: space-between;
             align-items: center;
         }
-
         .logo {
             font-size: 1.3rem;
             font-weight: 700;
@@ -61,30 +50,12 @@
             letter-spacing: -0.5px;
             flex-grow: 1;
         }
-
-        .nav-right {
-            display: flex;
-            gap: 0.75rem;
-            align-items: center;
-        }
-
+        .nav-right { display: flex; gap: 0.75rem; align-items: center; }
         @media (max-width: 768px) {
-            nav {
-                padding: 0.75rem 1rem;
-            }
-
-            .logo {
-                font-size: 1.1rem;
-            }
-
-            .nav-right {
-                gap: 0.5rem;
-            }
-
-            .btn {
-                padding: 0.5rem 1rem;
-                font-size: 0.85rem;
-            }
+            nav { padding: 0.75rem 1rem; }
+            .logo { font-size: 1.1rem; }
+            .nav-right { gap: 0.5rem; }
+            .btn { padding: 0.5rem 1rem; font-size: 0.85rem; }
         }
 
         .btn {
@@ -98,23 +69,19 @@
             text-decoration: none;
             display: inline-block;
         }
-
         .btn-primary {
             background: var(--primary);
             color: white;
         }
-
         .btn-primary:hover {
             background: var(--primary-dark);
             transform: translateY(-2px);
         }
-
         .btn-secondary {
             background: transparent;
             color: var(--text-muted);
             border: 1px solid var(--border);
         }
-
         .btn-secondary:hover {
             color: var(--primary);
             border-color: var(--primary);
@@ -127,12 +94,7 @@
             text-align: center;
             background: linear-gradient(135deg, rgba(8, 145, 178, 0.03) 0%, rgba(6, 182, 212, 0.03) 100%);
         }
-
-        .hero-content {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
+        .hero-content { max-width: 800px; margin: 0 auto; }
         .hero h1 {
             font-size: 3.5rem;
             font-weight: 800;
@@ -141,70 +103,17 @@
             line-height: 1.1;
             letter-spacing: -1px;
         }
-
-        .hero p {
-            font-size: 1.25rem;
-            color: var(--text-muted);
-            margin-bottom: 2.5rem;
-            line-height: 1.6;
-        }
-
-        .cta-group {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
+        .hero p { font-size: 1.25rem; color: var(--text-muted); margin-bottom: 2.5rem; line-height: 1.6; }
+        .cta-group { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
 
         /* Features Section */
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 2rem;
-        }
-
-        .features {
-            padding: 6rem 2rem;
-        }
-
-        @media (max-width: 768px) {
-            .features {
-                padding: 4rem 1rem;
-            }
-        }
-
-        .section-header {
-            text-align: center;
-            margin-bottom: 4rem;
-        }
-
-        @media (max-width: 768px) {
-            .section-header {
-                margin-bottom: 2rem;
-            }
-
-            .section-header h2 {
-                font-size: 1.8rem;
-            }
-
-            .section-header p {
-                font-size: 0.95rem;
-            }
-        }
-
-        .section-header h2 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--text);
-            margin-bottom: 1rem;
-        }
-
-        .section-header p {
-            font-size: 1.1rem;
-            color: var(--text-muted);
-            max-width: 600px;
-            margin: 0 auto;
-        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 0 2rem; }
+        .features { padding: 6rem 2rem; }
+        @media (max-width: 768px) { .features { padding: 4rem 1rem; } }
+        .section-header { text-align: center; margin-bottom: 4rem; }
+        @media (max-width: 768px) { .section-header { margin-bottom: 2rem; } .section-header h2 { font-size: 1.8rem; } .section-header p { font-size: 0.95rem; } }
+        .section-header h2 { font-size: 2.5rem; font-weight: 700; color: var(--text); margin-bottom: 1rem; }
+        .section-header p { font-size: 1.1rem; color: var(--text-muted); max-width: 600px; margin: 0 auto; }
 
         .features-grid {
             display: grid;
@@ -212,7 +121,6 @@
             gap: 2rem;
             width: 100%;
         }
-
         .feature-card {
             background: var(--bg-subtle);
             border: 1px solid var(--border);
@@ -221,320 +129,74 @@
             text-align: center;
             transition: all 0.3s ease;
         }
-
         .feature-card:hover {
             border-color: var(--primary);
             background: var(--bg);
             box-shadow: 0 8px 24px rgba(8, 145, 178, 0.1);
             transform: translateY(-4px);
         }
-
-        .feature-icon {
-            font-size: 3rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .feature-card h3 {
-            font-size: 1.35rem;
-            font-weight: 600;
-            color: var(--text);
-            margin-bottom: 0.75rem;
-        }
-
-        .feature-card p {
-            color: var(--text-muted);
-            line-height: 1.7;
-            font-size: 0.95rem;
-        }
-
-        .diet-tags {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 1rem;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .diet-tag {
-            background: rgba(8, 145, 178, 0.1);
-            color: var(--primary);
-            padding: 0.35rem 0.8rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
+        .feature-icon { font-size: 3rem; margin-bottom: 1.5rem; }
+        .feature-card h3 { font-size: 1.35rem; font-weight: 600; color: var(--text); margin-bottom: 0.75rem; }
+        .feature-card p { color: var(--text-muted); line-height: 1.7; font-size: 0.95rem; }
+        .diet-tags { display: flex; gap: 0.5rem; margin-top: 1rem; justify-content: center; flex-wrap: wrap; }
+        .diet-tag { background: rgba(8, 145, 178, 0.1); color: var(--primary); padding: 0.35rem 0.8rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
 
         @media (max-width: 768px) {
-            .features-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 0.75rem;
-                max-width: 100%;
-                overflow: hidden;
-            }
-
-            .feature-card {
-                padding: 1.25rem 0.75rem;
-            }
-
-            .feature-card h3 {
-                font-size: 1rem;
-            }
-
-            .feature-card p {
-                font-size: 0.8rem;
-            }
-
-            .feature-icon {
-                font-size: 2.2rem;
-                margin-bottom: 0.75rem;
-            }
-
-            .features-grid .feature-card:nth-child(n+7) {
-                display: none;
-            }
-
-            .hero h1 {
-                font-size: 2.5rem;
-            }
-
-            .modal-content {
-                padding: 2rem;
-            }
+            .features-grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; max-width: 100%; overflow: hidden; }
+            .feature-card { padding: 1.25rem 0.75rem; }
+            .feature-card h3 { font-size: 1rem; }
+            .feature-card p { font-size: 0.8rem; }
+            .feature-icon { font-size: 2.2rem; margin-bottom: 0.75rem; }
+            .features-grid .feature-card:nth-child(n+7) { display: none; }
+            .hero h1 { font-size: 2.5rem; }
+            .modal-content { padding: 2rem; }
         }
 
         /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal.show {
-            display: flex;
-        }
-
-        .modal-content {
-            background: var(--bg);
-            border-radius: 12px;
-            padding: 3rem;
-            max-width: 450px;
-            width: 90%;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            position: relative;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-
-        .modal-header h2 {
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: var(--text);
-        }
-
-        .close-btn {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: var(--text-muted);
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 0.9rem;
-            font-weight: 500;
-            color: var(--text);
-            margin-bottom: 0.5rem;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 0.85rem;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            font-size: 1rem;
-            transition: border-color 0.3s;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.1);
-        }
-
-        .form-group button {
-            width: 100%;
-        }
-
-        .auth-toggle {
-            text-align: center;
-            margin-top: 1.5rem;
-            font-size: 0.9rem;
-            color: var(--text-muted);
-        }
-
-        .auth-toggle a {
-            color: var(--primary);
-            cursor: pointer;
-            font-weight: 600;
-            text-decoration: none;
-        }
-
-        .auth-toggle a:hover {
-            text-decoration: underline;
-        }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 2000; justify-content: center; align-items: center; }
+        .modal.show { display: flex; }
+        .modal-content { background: var(--bg); border-radius: 12px; padding: 3rem; max-width: 450px; width: 90%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); position: relative; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .modal-header h2 { font-size: 1.75rem; font-weight: 700; color: var(--text); }
+        .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted); }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text); margin-bottom: 0.5rem; }
+        .form-group input { width: 100%; padding: 0.85rem; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; transition: border-color 0.3s; }
+        .form-group input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.1); }
+        .form-group button { width: 100%; }
+        .auth-toggle { text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-muted); }
+        .auth-toggle a { color: var(--primary); cursor: pointer; font-weight: 600; text-decoration: none; }
+        .auth-toggle a:hover { text-decoration: underline; }
 
         /* App Section */
-        .app-section {
-            padding: 4rem 2rem;
-            background: var(--bg-subtle);
-        }
+        .app-section { padding: 4rem 2rem; background: var(--bg-subtle); }
+        .app-grid { display: grid; grid-template-columns: 1fr; gap: 3rem; align-items: center; max-width: 900px; margin: 0 auto; }
+        @media (max-width: 768px) { .app-grid { grid-template-columns: 1fr; } }
+        .app-content h2 { font-size: 2.2rem; font-weight: 700; color: var(--text); margin-bottom: 1.5rem; text-align: center; }
+        .app-content p { font-size: 1.05rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.7; }
+        .step-list { list-style: none; }
+        .step-list li { display: flex; gap: 1rem; margin-bottom: 1.5rem; align-items: flex-start; }
+        .step-number { background: var(--primary); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; flex-shrink: 0; }
+        .step-text h4 { color: var(--text); margin-bottom: 0.25rem; font-weight: 600; }
+        .step-text p { color: var(--text-muted); font-size: 0.95rem; margin: 0; }
+        .app-preview { background: linear-gradient(135deg, rgba(8, 145, 178, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%); border-radius: 12px; padding: 2rem; text-align: center; height: 400px; display: flex; align-items: center; justify-content: center; font-size: 4rem; }
 
-        .app-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 3rem;
-            align-items: center;
-            max-width: 900px;
-            margin: 0 auto;
-        }
-
-        @media (max-width: 768px) {
-            .app-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .app-content h2 {
-            font-size: 2.2rem;
-            font-weight: 700;
-            color: var(--text);
-            margin-bottom: 1.5rem;
-            text-align: center;
-        }
-
-        .app-content p {
-            font-size: 1.05rem;
-            color: var(--text-muted);
-            margin-bottom: 1.5rem;
-            line-height: 1.7;
-        }
-
-        .step-list {
-            list-style: none;
-        }
-
-        .step-list li {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-            align-items: flex-start;
-        }
-
-        .step-number {
-            background: var(--primary);
-            color: white;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            flex-shrink: 0;
-        }
-
-        .step-text h4 {
-            color: var(--text);
-            margin-bottom: 0.25rem;
-            font-weight: 600;
-        }
-
-        .step-text p {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-            margin: 0;
-        }
-
-        .app-preview {
-            background: linear-gradient(135deg, rgba(8, 145, 178, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%);
-            border-radius: 12px;
-            padding: 2rem;
-            text-align: center;
-            height: 400px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 4rem;
-        }
+        /* Cloud Section */
+        .cloud-section { padding: 2rem 2rem; background: linear-gradient(135deg, rgba(8,145,178,0.05), rgba(6,182,212,0.05)); }
+        .cloud-grid { display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap; margin-top: 1.5rem; }
+        .cloud-item { text-align: center; }
+        .cloud-item div { font-size: 2rem; }
+        .cloud-item p { margin-top: 0.5rem; }
 
         /* Footer */
-        footer {
-            background: var(--text);
-            color: white;
-            padding: 2rem;
-            text-align: center;
-            font-size: 0.9rem;
-            margin-top: 4rem;
-        }
-
-        .error {
-            background: #fee2e2;
-            color: #dc2626;
-            padding: 0.75rem;
-            border-radius: 6px;
-            margin-bottom: 1rem;
-            font-size: 0.9rem;
-            display: none;
-        }
-
-        .error.show {
-            display: block;
-        }
-
-        .divider {
-            display: flex;
-            align-items: center;
-            margin: 1.5rem 0;
-            gap: 1rem;
-        }
-
-        .divider-line {
-            flex: 1;
-            height: 1px;
-            background: var(--border);
-        }
-
-        .divider-text {
-            color: var(--text-muted);
-            font-size: 0.85rem;
-        }
-
-        #google-signin-button {
-            width: 100%;
-            display: flex;
-            justify-content: center;
-        }
-
-        .google-button {
-            width: 100%;
-        }
+        footer { background: var(--text); color: white; padding: 2rem; text-align: center; font-size: 0.9rem; margin-top: 4rem; }
+        .error { background: #fee2e2; color: #dc2626; padding: 0.75rem; border-radius: 6px; margin-bottom: 1rem; font-size: 0.9rem; display: none; }
+        .error.show { display: block; }
+        .divider { display: flex; align-items: center; margin: 1.5rem 0; gap: 1rem; }
+        .divider-line { flex: 1; height: 1px; background: var(--border); }
+        .divider-text { color: var(--text-muted); font-size: 0.85rem; }
+        #google-signin-button { width: 100%; display: flex; justify-content: center; }
+        .google-button { width: 100%; }
     </style>
 </head>
 <body>
@@ -569,14 +231,12 @@
                 <h2>What PlateAI Does</h2>
                 <p>Everything you need to understand and optimize your favorite nutritious meals</p>
             </div>
-
             <div class="features-grid">
                 <div class="feature-card">
                     <div class="feature-icon">💬</div>
                     <h3>AI Food Coach</h3>
                     <p>Ask our AI nutritionist anything about ingredients, recipes, or dietary advice.</p>
                 </div>
-
                 <div class="feature-card">
                     <div class="feature-icon">🍳</div>
                     <h3>Recipe Discovery</h3>
@@ -586,37 +246,31 @@
                         <span class="diet-tag">Vegan Friendly</span>
                     </div>
                 </div>
-
                 <div class="feature-card">
                     <div class="feature-icon">📸</div>
                     <h3>Visual Recognition</h3>
                     <p>Snap a photo and instantly get detailed nutritional insights.</p>
                 </div>
-
                 <div class="feature-card">
                     <div class="feature-icon">🔍</div>
                     <h3>Nutrition Tracking</h3>
                     <p>Auto-calculate calories, protein, carbs, fat, and fiber for every meal.</p>
                 </div>
-
                 <div class="feature-card">
                     <div class="feature-icon">📋</div>
                     <h3>Meal Planning</h3>
                     <p>Convert any recipe to keto-friendly, vegan, or your dietary preferences.</p>
                 </div>
-
                 <div class="feature-card">
                     <div class="feature-icon">📊</div>
                     <h3>Progress Insights</h3>
                     <p>Track nutrition trends and progress toward your health goals.</p>
                 </div>
-
                 <div class="feature-card">
                     <div class="feature-icon">⚡</div>
                     <h3>Instant Results</h3>
                     <p>Real-time analysis in seconds. No waiting, no guessing.</p>
                 </div>
-
                 <div class="feature-card">
                     <div class="feature-icon">🎯</div>
                     <h3>Goal Tracking</h3>
@@ -633,7 +287,6 @@
                 <div class="app-content">
                     <h2>How It Works</h2>
                     <p>Getting started with PlateAI is simple. Follow these three easy steps to revolutionize how you think about food.</p>
-
                     <ul class="step-list">
                         <li>
                             <div class="step-number">1</div>
@@ -662,6 +315,30 @@
         </div>
     </section>
 
+    <!-- Cloud Infrastructure Section -->
+    <section class="cloud-section">
+        <div class="container">
+            <div class="section-header">
+                <h2>Built on Production-Ready Cloud</h2>
+                <p style="max-width: 700px; margin: 0 auto;">PlateAI is deployed on AWS using serverless architecture and automated with Terraform. Our infrastructure is cost-efficient, scalable, and designed to handle real-time AI-powered food analysis.</p>
+            </div>
+            <div class="cloud-grid">
+                <div class="cloud-item">
+                    <div>☁️</div>
+                    <p>AWS Serverless</p>
+                </div>
+                <div class="cloud-item">
+                    <div>⚙️</div>
+                    <p>Terraform Managed</p>
+                </div>
+                <div class="cloud-item">
+                    <div>📊</div>
+                    <p>Real-Time Analytics</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Auth Modals -->
     <div class="modal" id="signUpModal">
         <div class="modal-content">
@@ -669,33 +346,26 @@
                 <h2>Create Account</h2>
                 <button class="close-btn" onclick="closeModal('signUpModal')">✕</button>
             </div>
-
             <div class="error" id="signUpError"></div>
-
             <div id="google-signup-button"></div>
-
             <div class="divider">
                 <div class="divider-line"></div>
                 <div class="divider-text">or</div>
                 <div class="divider-line"></div>
             </div>
-
             <form onsubmit="handleSignUp(event)">
                 <div class="form-group">
                     <label>Email Address</label>
                     <input type="email" id="signUpEmail" required>
                 </div>
-
                 <div class="form-group">
                     <label>Password</label>
                     <input type="password" id="signUpPassword" required>
                 </div>
-
                 <div class="form-group">
                     <button type="submit" class="btn btn-primary">Create Account</button>
                 </div>
             </form>
-
             <div class="auth-toggle">
                 Already have an account? <a onclick="toggleModal('signUpModal', 'signInModal')">Sign In</a>
             </div>
@@ -708,33 +378,26 @@
                 <h2>Sign In</h2>
                 <button class="close-btn" onclick="closeModal('signInModal')">✕</button>
             </div>
-
             <div class="error" id="signInError"></div>
-
             <div id="google-signin-button"></div>
-
             <div class="divider">
                 <div class="divider-line"></div>
                 <div class="divider-text">or</div>
                 <div class="divider-line"></div>
             </div>
-
             <form onsubmit="handleSignIn(event)">
                 <div class="form-group">
                     <label>Email Address</label>
                     <input type="email" id="signInEmail" required>
                 </div>
-
                 <div class="form-group">
                     <label>Password</label>
                     <input type="password" id="signInPassword" required>
                 </div>
-
                 <div class="form-group">
                     <button type="submit" class="btn btn-primary">Sign In</button>
                 </div>
             </form>
-
             <div class="auth-toggle">
                 Don't have an account? <a onclick="toggleModal('signInModal', 'signUpModal')">Create one</a>
             </div>
@@ -750,46 +413,30 @@
         const GOOGLE_CLIENT_ID = '763043938348-grfgm9oj02f2147ea2cmnd3q5qo243dv.apps.googleusercontent.com';
         const API_ENDPOINT = 'https://s8w5yfkidb.execute-api.us-east-1.amazonaws.com/prod';
 
-        // Initialize Google Sign In
         function initializeGoogleSignIn() {
             google.accounts.id.initialize({
                 client_id: GOOGLE_CLIENT_ID,
                 callback: handleGoogleSignIn
             });
-
-            // Render Sign In button
-            google.accounts.id.renderButton(
-                document.getElementById('google-signin-button'),
-                { theme: 'outline', size: 'large', width: '100%' }
-            );
-
-            // Render Sign Up button
-            google.accounts.id.renderButton(
-                document.getElementById('google-signup-button'),
-                { theme: 'outline', size: 'large', width: '100%' }
-            );
+            google.accounts.id.renderButton(document.getElementById('google-signin-button'), { theme: 'outline', size: 'large', width: '100%' });
+            google.accounts.id.renderButton(document.getElementById('google-signup-button'), { theme: 'outline', size: 'large', width: '100%' });
         }
 
-        // Check if user is logged in on page load
         function checkLoginStatus() {
             const email = localStorage.getItem('email');
             if (email) {
                 updateNavForLoggedIn(email);
-                // Hide hero, features, how it works sections
                 document.querySelector('.hero').style.display = 'none';
                 document.querySelector('.features').style.display = 'none';
                 document.querySelector('.app-section').style.display = 'none';
-                // Show dashboard
                 showDashboard();
             }
         }
 
         function updateNavForLoggedIn(email) {
             const navRight = document.querySelector('.nav-right');
-            navRight.innerHTML = `
-                <span style="color: var(--text-muted); font-size: 0.9rem; margin-right: 1rem;">${email}</span>
-                <button class="btn btn-secondary" onclick="logout()">Sign Out</button>
-            `;
+            navRight.innerHTML = `<span style="color: var(--text-muted); font-size: 0.9rem; margin-right: 1rem;">${email}</span>
+                                  <button class="btn btn-secondary" onclick="logout()">Sign Out</button>`;
         }
 
         function logout() {
@@ -798,29 +445,21 @@
             location.reload();
         }
 
-        // Handle Google Sign In response
         function handleGoogleSignIn(response) {
             const token = response.credential;
-            
-            // Send token to Lambda to validate and create/get user
             fetch(API_ENDPOINT, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'google_auth',
-                    google_token: token
-                })
+                body: JSON.stringify({ action: 'google_auth', google_token: token })
             })
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    // Store user info
                     localStorage.setItem('user_id', data.user_id);
                     localStorage.setItem('email', data.email);
                     localStorage.setItem('authMethod', 'google');
                     closeModal('signInModal');
                     closeModal('signUpModal');
-                    // Update nav and show dashboard
                     updateNavForLoggedIn(data.email);
                     document.querySelector('.hero').style.display = 'none';
                     document.querySelector('.features').style.display = 'none';
@@ -830,62 +469,32 @@
                     alert('Sign in failed: ' + data.message);
                 }
             })
-            .catch(err => {
-                console.error('Google auth error:', err);
-                alert('Sign in failed. Try again.');
-            });
+            .catch(err => { console.error('Google auth error:', err); alert('Sign in failed. Try again.'); });
         }
 
-        function openSignUp() {
-            document.getElementById('signUpModal').classList.add('show');
-        }
+        function openSignUp() { document.getElementById('signUpModal').classList.add('show'); }
+        function openSignIn() { document.getElementById('signInModal').classList.add('show'); }
+        function closeModal(modalId) { document.getElementById(modalId).classList.remove('show'); }
+        function toggleModal(closeId, openId) { closeModal(closeId); openModal(openId); }
+        function openModal(modalId) { document.getElementById(modalId).classList.add('show'); }
 
-        function openSignIn() {
-            document.getElementById('signInModal').classList.add('show');
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).classList.remove('show');
-        }
-
-        function toggleModal(closeId, openId) {
-            closeModal(closeId);
-            openModal(openId);
-        }
-
-        function openModal(modalId) {
-            document.getElementById(modalId).classList.add('show');
-        }
-
-        // Close modals on outside click
         document.querySelectorAll('.modal').forEach(modal => {
-            modal.addEventListener('click', function(e) {
-                if (e.target === this) {
-                    this.classList.remove('show');
-                }
-            });
+            modal.addEventListener('click', function(e) { if (e.target === this) { this.classList.remove('show'); } });
         });
 
         function handleSignUp(e) {
             e.preventDefault();
             const email = document.getElementById('signUpEmail').value;
             const password = document.getElementById('signUpPassword').value;
-            
             if (password.length < 6) {
                 document.getElementById('signUpError').textContent = 'Password must be at least 6 characters';
                 document.getElementById('signUpError').classList.add('show');
                 return;
             }
-
-            // Send to Lambda to create user
             fetch(API_ENDPOINT, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'create_user',
-                    email: email,
-                    password: password
-                })
+                body: JSON.stringify({ action: 'create_user', email, password })
             })
             .then(res => res.json())
             .then(data => {
@@ -915,16 +524,10 @@
             e.preventDefault();
             const email = document.getElementById('signInEmail').value;
             const password = document.getElementById('signInPassword').value;
-            
-            // Send to Lambda to verify user
             fetch(API_ENDPOINT, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'verify_user',
-                    email: email,
-                    password: password
-                })
+                body: JSON.stringify({ action: 'verify_user', email, password })
             })
             .then(res => res.json())
             .then(data => {
@@ -950,12 +553,8 @@
             });
         }
 
-        // Redirect to dashboard
-        function showDashboard() {
-            window.location.href = '/dashboard.html';
-        }
+        function showDashboard() { window.location.href = '/dashboard.html'; }
 
-        // Initialize when page loads
         window.addEventListener('load', function() {
             initializeGoogleSignIn();
             checkLoginStatus();
