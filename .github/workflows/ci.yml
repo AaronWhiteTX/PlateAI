@@ -1,4 +1,4 @@
-name: PlateAI CI
+name: PlateAI CI/CD
 
 on:
   push:
@@ -17,8 +17,40 @@ jobs:
         with:
           python-version: '3.12'
       
-      - name: Install dependencies
+      - name: Install pytest
         run: pip install pytest boto3
       
       - name: Run tests
         run: pytest tests/ -v
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      
+      - name: Deploy frontend to S3
+        run: |
+          aws s3 sync frontend/ s3://plateai-frontend-730980070158/ --delete
+      
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation --distribution-id E2D4G621UQDPM6 --paths "/*"
+      
+      - name: Package Lambda
+        run: |
+          cd backend/lambda/FoodIdentifierProcessor
+          zip -r ../../../lambda.zip lambda_function.py
+          cd ../../..
+      
+      - name: Deploy Lambda
+        run: |
+          aws lambda update-function-code --function-name FoodIdentifierProcessor --zip-file fileb://lambda.zip
