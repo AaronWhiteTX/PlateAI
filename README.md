@@ -5,6 +5,8 @@ Production serverless app using AWS Bedrock (Claude Vision) for photo-based meal
 **Live Demo:** [plateai.cloud](https://plateai.cloud)  
 **Infrastructure:** [plateai-terraform](https://github.com/AaronWhiteTX/Plateai-terraform)
 
+![CI/CD](https://github.com/AaronWhiteTX/PlateAI/actions/workflows/ci.yml/badge.svg)
+
 ---
 
 ## Architecture
@@ -67,6 +69,21 @@ graph TB
 
 ---
 
+## CI/CD Pipeline
+
+Full CI/CD pipeline using GitHub Actions:
+
+| Trigger | What Happens |
+|---------|--------------|
+| Push to main | Tests run, Frontend deploys to S3, Lambda updates, CloudFront cache clears |
+| Pull request | Tests run only (no deploy) |
+
+**Pipeline Steps:**
+- Run pytest on Lambda function code
+- Sync frontend files to S3
+- Update Lambda function code
+- Invalidate CloudFront cache
+
 ## Architecture Decisions
 
 **Cost Optimization**
@@ -109,6 +126,7 @@ graph TB
 **API**: API Gateway REST (FoodIdentifierAPI)  
 **CDN**: CloudFront (d1ws39rn0mdavv.cloudfront.net)  
 **IaC**: Terraform (26 resources)  
+**CI/CD**: GitHub Actions  
 **Monitoring**: CloudWatch Logs
 
 ---
@@ -138,7 +156,7 @@ graph TB
 - **Monthly Cost**: $1-3 (engineered for cost efficiency)
 - **Availability**: 99.9%+ (serverless inherent reliability)
 - **Infrastructure**: 26 AWS resources, 100% Terraform-managed
-- **Deployment**: One command (`terraform apply`)
+- **Deployment**: Automated via GitHub Actions CI/CD
 
 ---
 
@@ -162,6 +180,12 @@ Full deployment guide: [DEPLOYMENT.md](DEPLOYMENT.md)
 - Production serverless architecture (Lambda, DynamoDB, S3, API Gateway, CloudFront)
 - Multi-service AWS integration across compute, storage, networking, AI
 - Infrastructure as Code with Terraform (import, provision, teardown)
+
+**CI/CD and DevOps**
+- Full CI/CD pipeline with GitHub Actions
+- Automated testing with pytest
+- Automated deployment to S3 and Lambda
+- CloudFront cache invalidation for instant updates
 
 **AI/ML Integration**
 - AWS Bedrock Claude 3.5 Sonnet Vision API for image recognition
@@ -188,4 +212,4 @@ Full deployment guide: [DEPLOYMENT.md](DEPLOYMENT.md)
 
 ---
 
-**Built with AWS | Managed with Terraform**
+**Built with AWS | Managed with Terraform | Deployed with GitHub Actions**
